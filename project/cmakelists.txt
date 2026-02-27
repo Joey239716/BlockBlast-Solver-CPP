@@ -9,6 +9,7 @@ add_executable(blockblast
     main.cpp
     board.cpp
     pieceLibrary.cpp
+    solver.cpp
     availablePieces.cpp
     ../imgui/imgui.cpp
     ../imgui/imgui_draw.cpp
