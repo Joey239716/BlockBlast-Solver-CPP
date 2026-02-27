@@ -29,15 +29,15 @@ BlockBlastSolver::Solution BlockBlastSolver::Solve(const std::unordered_set<Poin
     canSolve(0, 0, board);
 
 
-    if (!bestPlacement[0].empty()){
+    if (!bestOrder.empty()){
         solution.found = 1;
         solution.solutionPlacements = bestPlacement;
         solution.solutionOrder = bestOrder;
     }
-
     else {
         solution.found = 0;
     }
+
 
     return solution;
 
@@ -45,7 +45,11 @@ BlockBlastSolver::Solution BlockBlastSolver::Solve(const std::unordered_set<Poin
 
 void BlockBlastSolver::canSolve(int fittedPieces, int score, int board[8][8])
 {
-        if (fittedPieces == 3)
+        int numPieces = 0;
+        for (size_t j = 0; j < 3; ++j)
+            if (!pieces[j]->empty()) numPieces++;
+
+        if (fittedPieces == numPieces) // done when all non-empty pieces are placed
         {
             if (score >= maxResult)
             {
@@ -63,8 +67,12 @@ void BlockBlastSolver::canSolve(int fittedPieces, int score, int board[8][8])
 
         for (size_t j = 0; j < 3; ++j)
         {
-            if (!placement[j].empty())
-                continue;
+
+        if (!placement[j].empty())
+            continue;
+    
+        if (pieces[j]->empty())  // skip empty pieces
+            continue;
 
             Point anchor = *(pieces[j]->begin());
 
