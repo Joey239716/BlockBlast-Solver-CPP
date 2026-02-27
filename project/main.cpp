@@ -27,6 +27,7 @@ int main() {
 #include <SDL.h>
 #include "board.h"
 #include "availablePieces.h"
+#include "pieceLibrary.h"
 #ifdef _WIN32
 #include <windows.h>        // SetProcessDPIAware()
 #endif
@@ -90,9 +91,13 @@ int main() {
                 snprintf(id, sizeof(id), "##B%d_%d", row, col);
 
                 if (board1[row][col]) {
+                        Point point = {col, row};
+                        piece1.insert(point);
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
                 }
                 else {
+                        Point point = {col, row};
+                        piece1.erase(point);
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
                 }
 
@@ -113,9 +118,13 @@ int main() {
 
                 if (board2[row][col]) {
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
+                        Point point = {col, row};
+                        piece2.insert(point);
                 }
                 else {
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
+                        Point point = {col, row};
+                        piece2.erase(point);
                 }
 
                 if (ImGui::Button(id, ImVec2(25, 25))) {
@@ -134,9 +143,13 @@ int main() {
                 snprintf(id, sizeof(id), "##D%d_%d", row, col);
 
                 if (board3[row][col]) {
+                        Point point = {col, row};
+                        piece3.insert(point);
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
                 }
                 else {
+                        Point point = {col, row};
+                        piece3.erase(point);
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
                 }
 
@@ -145,6 +158,12 @@ int main() {
                 }
                 ImGui::PopStyleColor();
             }
+        }
+        ImGui::End();
+
+        ImGui::Begin("Solve!");
+        if (ImGui::Button("Solve")) {
+            // Call the solve function here
         }
         ImGui::End();
 
