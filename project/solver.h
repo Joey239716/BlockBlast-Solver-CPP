@@ -6,10 +6,30 @@
 
 class BlockBlastSolver {
 public:
+
+
+
     struct Solution {
         bool found;
-        std::vector<Point> placements;
+        std::array<std::vector<Point>, 3> solutionPlacements;
+        std::vector<int> solutionOrder;
     };
 
     Solution Solve(const std::unordered_set<Point, PointHash>& p1, const std::unordered_set<Point, PointHash>& p2, const std::unordered_set<Point, PointHash>& p3, bool board[8][8]);
+
+
+private:
+    void canSolve(int fittedPieces, int score, bool board[8][8]);
+    bool canFit(int offsetX, int offsetY, const std::unordered_set<Point, PointHash> &piece, bool board[8][8], int r, int c);
+    int simulateBlast(bool tempBoard[8][8]);
+
+
+    int maxResult = 0;
+    std::array<std::vector<Point>, 3> bestPlacement;
+    std::vector<int> bestOrder; 
+    int tempScore;
+    std::vector<int> order;
+    const std::unordered_set<Point, PointHash> *pieces[3];
+    std::array<std::vector<Point>, 3> placement;
+
 };

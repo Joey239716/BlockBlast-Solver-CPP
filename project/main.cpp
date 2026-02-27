@@ -28,6 +28,7 @@ int main() {
 #include "pieceLibrary.h"
 #include "board.h"
 #include "availablePieces.h"
+#include "solver.h"
 #ifdef _WIN32
 #include <windows.h>        // SetProcessDPIAware()
 #endif
@@ -79,92 +80,52 @@ int main() {
                 }
                 ImGui::PopStyleColor();
             }
-        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
 
-        ImGui::End();
+        auto drawPiece = [&](const char* label, bool pieceBoard[3][3], 
+                      std::unordered_set<Point, PointHash>& piece, char prefix) {
+        
 
-        ImGui::Begin("Given Piece 1");
-         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                if (col > 0) ImGui::SameLine();
-                char id[16];
-                snprintf(id, sizeof(id), "##B%d_%d", row, col);
-
-                if (board1[row][col]) {
-                        Point point = {col, row};
-                        piece1.insert(point);
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
-                }
-                else {
-                        Point point = {col, row};
-                        piece1.erase(point);
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
-                }
-
-                if (ImGui::Button(id, ImVec2(25, 25))) {
-                    board1[row][col] = !board1[row][col];
-                }
-                ImGui::PopStyleColor();
+        ImGui::BeginGroup();
+        ImGui::Text("%s", label);
+        for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            if (col > 0) ImGui::SameLine();
+            char id[16];
+            snprintf(id, sizeof(id), "##%c%d_%d", prefix, row, col);
+            ImGui::PushStyleColor(ImGuiCol_Button, pieceBoard[row][col] ? ImVec4(1,0,0,1) : ImVec4(0.2f,0.2f,0.2f,1));
+            if (ImGui::Button(id, ImVec2(25, 25))) {
+                pieceBoard[row][col] = !pieceBoard[row][col];
+                Point point = {col, row};
+                if (pieceBoard[row][col]) piece.insert(point);
+                else piece.erase(point);
             }
-        }
-        ImGui::End();
-
-        ImGui::Begin("Given Piece 2");
-         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                if (col > 0) ImGui::SameLine();
-                char id[16];
-                snprintf(id, sizeof(id), "##C%d_%d", row, col);
-
-                if (board2[row][col]) {
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
-                        Point point = {col, row};
-                        piece2.insert(point);
-                }
-                else {
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
-                        Point point = {col, row};
-                        piece2.erase(point);
-                }
-
-                if (ImGui::Button(id, ImVec2(25, 25))) {
-                    board2[row][col] = !board2[row][col];
-                }
-                ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
             }
-        }
-        ImGui::End();
-
-        ImGui::Begin("Given Piece 3");
-         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                if (col > 0) ImGui::SameLine();
-                char id[16];
-                snprintf(id, sizeof(id), "##D%d_%d", row, col);
-
-                if (board3[row][col]) {
-                        Point point = {col, row};
-                        piece3.insert(point);
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
-                }
-                else {
-                        Point point = {col, row};
-                        piece3.erase(point);
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
-                }
-
-                if (ImGui::Button(id, ImVec2(25, 25))) {
-                    board3[row][col] = !board3[row][col];
-                }
-                ImGui::PopStyleColor();
             }
-        }
-        ImGui::End();
+            ImGui::EndGroup();
+        };
 
-        ImGui::Begin("Solve!");
+        drawPiece("Piece 1", board1, piece1, 'B');
+        ImGui::SameLine(0, 20);
+        drawPiece("Piece 2", board2, piece2, 'C');
+        ImGui::SameLine(0, 20);
+        drawPiece("Piece 3", board3, piece3, 'D');
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
         if (ImGui::Button("Solve")) {
-            // Call the solve function here
+            BlockBlastSolver solver;
+            BlockBlastSolver::Solution result = solver.Solve(piece1, piece2, piece3, board);
+            if (result.found) {
+            }
         }
+
         ImGui::End();
 
         
