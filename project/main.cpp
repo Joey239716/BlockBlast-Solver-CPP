@@ -106,9 +106,13 @@ static void ApplyBlockBlastTheme() {
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
+    SDL_Rect displayBounds;
+    SDL_GetDisplayBounds(0, &displayBounds);
+    int W = displayBounds.w;
+    int H = displayBounds.h;
     SDL_Window* window = SDL_CreateWindow("BlockBlast Solver",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1000, 600, SDL_WINDOW_SHOWN);
+        W, H, SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     IMGUI_CHECKVERSION();
@@ -154,7 +158,7 @@ int main() {
 
         // Left panel - board setup
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(W * 0.5f, (float)H), ImGuiCond_Always);
         ImGui::Begin("Board Setup", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
         ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.85f, 1.0f), "CURRENT BOARD");
@@ -162,25 +166,27 @@ int main() {
 
         // Board grid with subtle group background
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.10f, 0.11f, 0.15f, 1.0f));
-        ImGui::BeginChild("BoardGrid", ImVec2(368, 368), false);
+        ImGui::BeginChild("BoardGrid", ImVec2(414, 414), false);
         ImGui::Spacing();
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
         for (int row = 0; row < 8; row++) {
             ImGui::Indent(8.0f);
             for (int col = 0; col < 8; col++) {
-                if (col > 0) ImGui::SameLine(0, 3);
+                if (col > 0) ImGui::SameLine(0, 2);
                 char id[16];
                 snprintf(id, sizeof(id), "##A%d_%d", row, col);
                 bool cellValue = showSolution ? displayBoard[row][col] : board[row][col];
                 ImGui::PushStyleColor(ImGuiCol_Button,        cellValue ? colorFilled : colorEmpty);
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cellValue ? ImVec4(1.0f,0.38f,0.38f,1.0f) : ImVec4(0.22f,0.25f,0.34f,1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cellValue ? ImVec4(0.75f,0.18f,0.18f,1.0f) : ImVec4(0.28f,0.32f,0.44f,1.0f));
-                if (ImGui::Button(id, ImVec2(42, 42))) {
+                if (ImGui::Button(id, ImVec2(48, 48))) {
                     if (!showSolution) board[row][col] = !board[row][col];
                 }
                 ImGui::PopStyleColor(3);
             }
             ImGui::Unindent(8.0f);
         }
+        ImGui::PopStyleVar();
         ImGui::EndChild();
         ImGui::PopStyleColor();
 
@@ -196,6 +202,7 @@ int main() {
             ImGui::BeginGroup();
             ImGui::TextColored(ImVec4(0.65f, 0.70f, 0.85f, 1.0f), "%s", label);
             ImGui::Spacing();
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
             for (int row = 0; row < 5; row++) {
                 for (int col = 0; col < 5; col++) {
                     if (col > 0) ImGui::SameLine(0, 2);
@@ -215,14 +222,20 @@ int main() {
                     ImGui::PopStyleColor(3);
                 }
             }
+            ImGui::PopStyleVar();
             ImGui::EndGroup();
         };
+        float pieceStartY = ImGui::GetCursorPosY();
+        float pieceColWidth = 160.0f;
 
+        ImGui::SetCursorPos(ImVec2(18, pieceStartY));
         drawPiece("Piece 1", board1, piece1, 'B');
-        ImGui::SameLine(0, 24);
+        ImGui::SetCursorPos(ImVec2(18 + pieceColWidth, pieceStartY));
         drawPiece("Piece 2", board2, piece2, 'C');
-        ImGui::SameLine(0, 24);
+        ImGui::SetCursorPos(ImVec2(18 + pieceColWidth * 2, pieceStartY));
         drawPiece("Piece 3", board3, piece3, 'D');
+
+        ImGui::SetCursorPosY(pieceStartY + 160.0f); // advance cursor past the pieces
 
         ImGui::Spacing();
         ImGui::Separator();
@@ -233,7 +246,7 @@ int main() {
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  colorAccentAct);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
         if (ImGui::Button("  Find Solution  ", ImVec2(160, 38))) {
-            memcpy(displayBoard, board, sizeof(board)); // snapshot before solving
+            memcpy(displayBoard, board, sizeof(board));
             result = solver.Solve(piece1, piece2, piece3, board);
             showSolution = true;
 
@@ -274,8 +287,8 @@ int main() {
 
         // Right panel - solution
         if (showSolution) {
-            ImGui::SetNextWindowPos(ImVec2(500, 0), ImGuiCond_Always);
-            ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_Always);
+            ImGui::SetNextWindowPos(ImVec2(W * 0.5f, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(W * 0.5f, (float)H), ImGuiCond_Always);
             ImGui::Begin("Solution", &showSolution, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
             if (result.found) {
@@ -285,9 +298,10 @@ int main() {
                 for (int i = 0; i < 3; i++) {
                     ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.85f, 1.0f), "Move %d", i + 1);
                     ImGui::Spacing();
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
                     for (int row = 0; row < 8; row++) {
                         for (int col = 0; col < 8; col++) {
-                            if (col > 0) ImGui::SameLine(0, 3);
+                            if (col > 0) ImGui::SameLine(0, 2);
                             char id[16];
                             snprintf(id, sizeof(id), "##S%d_%d_%d", i, row, col);
                             ImVec4 cellColor =
@@ -297,10 +311,11 @@ int main() {
                             ImGui::PushStyleColor(ImGuiCol_Button,        cellColor);
                             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cellColor);
                             ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cellColor);
-                            ImGui::Button(id, ImVec2(30, 30));
+                            ImGui::Button(id, ImVec2(20, 20));
                             ImGui::PopStyleColor(3);
                         }
                     }
+                    ImGui::PopStyleVar();
                     ImGui::Spacing();
                     if (i < 2) {
                         ImGui::Separator();
