@@ -13,7 +13,7 @@
     6. If we find a solution
     */
 
-BlockBlastSolver::Solution BlockBlastSolver::Solve(const std::unordered_set<Point, PointHash> &p1, const std::unordered_set<Point, PointHash> &p2, const std::unordered_set<Point, PointHash> &p3, bool board[8][8])
+BlockBlastSolver::Solution BlockBlastSolver::Solve(const std::unordered_set<Point, PointHash> &p1, const std::unordered_set<Point, PointHash> &p2, const std::unordered_set<Point, PointHash> &p3, int board[8][8])
 {
     pieces[0] = &p1;
     pieces[1] = &p2;
@@ -43,11 +43,11 @@ BlockBlastSolver::Solution BlockBlastSolver::Solve(const std::unordered_set<Poin
 
 }
 
-void BlockBlastSolver::canSolve(int fittedPieces, int score, bool board[8][8])
+void BlockBlastSolver::canSolve(int fittedPieces, int score, int board[8][8])
 {
         if (fittedPieces == 3)
         {
-            if (score > maxResult)
+            if (score >= maxResult)
             {
                 maxResult = score;
                 bestPlacement = placement;
@@ -77,7 +77,7 @@ void BlockBlastSolver::canSolve(int fittedPieces, int score, bool board[8][8])
                 {
                     if (canFit(offsetX, offsetY, *pieces[j], board, r, c))
                     {
-                        bool tempBoard[8][8];
+                        int tempBoard[8][8];
                         memcpy(tempBoard, board, sizeof(tempBoard));
                         for (const auto &p : *pieces[j])
                         {
@@ -107,7 +107,7 @@ void BlockBlastSolver::canSolve(int fittedPieces, int score, bool board[8][8])
         }
 }
 
-int BlockBlastSolver::simulateBlast(bool tempBoard[8][8])
+int BlockBlastSolver::simulateBlast(int tempBoard[8][8])
     {
         // Iterate through each row and each column in our board, if it will be blasted, then add the coordinates to our set this way we don't double count points
         std::unordered_set<Point, PointHash> willDisappear;
@@ -121,7 +121,7 @@ int BlockBlastSolver::simulateBlast(bool tempBoard[8][8])
             {
                 Point curPoint = {(int)c, (int)r};
 
-                if (tempBoard[r][c])
+                if (tempBoard[r][c] != 0)
                 {
                     filledInPoints.push_back(curPoint);
                 }
@@ -139,7 +139,7 @@ int BlockBlastSolver::simulateBlast(bool tempBoard[8][8])
             {
                 Point curPoint = {(int)c, (int)r};
 
-                if (tempBoard[r][c])
+                if (tempBoard[r][c] != 0)
                 {
                     filledInPoints.push_back(curPoint);
                 }
@@ -158,7 +158,7 @@ int BlockBlastSolver::simulateBlast(bool tempBoard[8][8])
         return pieceScore;
     }
 
-bool BlockBlastSolver::canFit(int offsetX, int offsetY, const std::unordered_set<Point, PointHash> &piece, bool board[8][8], int r, int c)
+bool BlockBlastSolver::canFit(int offsetX, int offsetY, const std::unordered_set<Point, PointHash> &piece, int board[8][8], int r, int c)
     {
         for (const Point &p : piece)
         {
@@ -166,7 +166,7 @@ bool BlockBlastSolver::canFit(int offsetX, int offsetY, const std::unordered_set
             int newY = p.y + r + offsetY;
 
             // Check if the new position is within bounds and not occupied
-            if (newX < 0 || newX >= 8 || newY < 0 || newY >= 8 || board[newY][newX])
+            if (newX < 0 || newX >= 8 || newY < 0 || newY >= 8 || board[newY][newX] != 0)
             {
                 return false;
             }

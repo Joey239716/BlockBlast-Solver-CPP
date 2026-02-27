@@ -15,13 +15,12 @@ public:
         std::vector<int> solutionOrder;
     };
 
-    Solution Solve(const std::unordered_set<Point, PointHash>& p1, const std::unordered_set<Point, PointHash>& p2, const std::unordered_set<Point, PointHash>& p3, bool board[8][8]);
-
+    Solution Solve(const std::unordered_set<Point, PointHash>& p1, const std::unordered_set<Point, PointHash>& p2, const std::unordered_set<Point, PointHash>& p3, int board[8][8]);
+    int simulateBlast(int tempBoard[8][8]);
 
 private:
-    void canSolve(int fittedPieces, int score, bool board[8][8]);
-    bool canFit(int offsetX, int offsetY, const std::unordered_set<Point, PointHash> &piece, bool board[8][8], int r, int c);
-    int simulateBlast(bool tempBoard[8][8]);
+    void canSolve(int fittedPieces, int score, int board[8][8]);
+    bool canFit(int offsetX, int offsetY, const std::unordered_set<Point, PointHash> &piece, int board[8][8], int r, int c);
 
 
     int maxResult = 0;

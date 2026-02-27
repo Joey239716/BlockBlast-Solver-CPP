@@ -20,6 +20,7 @@ int main() {
     return 0;
 }    */ 
 
+#include "iostream"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
@@ -50,7 +51,11 @@ int main() {
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
 
+    bool showSolution = false;
     bool running = true;
+    BlockBlastSolver solver;
+    BlockBlastSolver::Solution result;
+
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -80,6 +85,7 @@ int main() {
                 }
                 ImGui::PopStyleColor();
             }
+        }
         
         ImGui::Spacing();
         ImGui::Separator();
@@ -92,16 +98,17 @@ int main() {
         ImGui::BeginGroup();
         ImGui::Text("%s", label);
         for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-            if (col > 0) ImGui::SameLine();
-            char id[16];
-            snprintf(id, sizeof(id), "##%c%d_%d", prefix, row, col);
-            ImGui::PushStyleColor(ImGuiCol_Button, pieceBoard[row][col] ? ImVec4(1,0,0,1) : ImVec4(0.2f,0.2f,0.2f,1));
-            if (ImGui::Button(id, ImVec2(25, 25))) {
-                pieceBoard[row][col] = !pieceBoard[row][col];
-                Point point = {col, row};
-                if (pieceBoard[row][col]) piece.insert(point);
-                else piece.erase(point);
+            for (int col = 0; col < 3; col++) 
+            {
+                if (col > 0) ImGui::SameLine();
+                char id[16];
+                snprintf(id, sizeof(id), "##%c%d_%d", prefix, row, col);
+                ImGui::PushStyleColor(ImGuiCol_Button, pieceBoard[row][col] ? ImVec4(1,0,0,1) : ImVec4(0.2f,0.2f,0.2f,1));
+                if (ImGui::Button(id, ImVec2(25, 25))) {
+                    pieceBoard[row][col] = !pieceBoard[row][col];
+                    Point point = {col, row};
+                    if (pieceBoard[row][col]) piece.insert(point);
+                    else piece.erase(point);
             }
             ImGui::PopStyleColor();
             }
@@ -120,13 +127,48 @@ int main() {
         ImGui::Spacing();
 
         if (ImGui::Button("Solve")) {
-            BlockBlastSolver solver;
-            BlockBlastSolver::Solution result = solver.Solve(piece1, piece2, piece3, board);
+            result = solver.Solve(piece1, piece2, piece3, board);
+            showSolution = true;
+
             if (result.found) {
+                int i = 0;
+                for (const auto moveOrder : result.solutionOrder) {
+                    std::vector<Point> place = result.solutionPlacements[moveOrder];
+                    for (const auto& coordinate : place) {
+                        board[coordinate.y][coordinate.x] = 2;
+                    }
+                    memcpy(moves[i], board, sizeof(board));
+                    solver.simulateBlast(board);
+
+                    for (size_t r = 0; r < 8; ++r) {
+                        for (size_t c = 0; c < 8; ++c) {
+                            if (board[r][c] == 2) board[r][c] = 1;
+                        }
+                    }
+                    i += 1;
+                }
+                
+
+                // print here, runs only once when button is clicked
+                for (int i = 0; i < 3; i++) {
+                    std::cout << "Move " << i + 1 << ":\n";
+                    for (int row = 0; row < 8; row++) {
+                        for (int col = 0; col < 8; col++) {
+                            std::cout << moves[i][row][col] << " ";
+                        }
+                        std::cout << "\n";
+                    }
+                    std::cout << "\n";
+                }
             }
         }
-
         ImGui::End();
+
+        if (showSolution) {
+            ImGui::Begin("Solution", &showSolution);
+            if (!result.found) ImGui::Text("No solution found.");
+            ImGui::End();
+        }
 
         
 
