@@ -2,13 +2,23 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <cstddef> // for size_t
+#include <functional> // for std::hash
 
 struct Point {
     int x, y;
 
-    bool operator<(const Point& other) const {
-        if (x != other.x) return x < other.x;
-        return y < other.y;
+    // This MUST have 'const' at the end 
+    // and take a 'const Point&' as the argument
+    bool operator==(const Point& other) const {
+        return (x == other.x && y == other.y);
+    }
+};
+
+struct PointHash {
+    std::size_t operator()(const Point& p) const {
+        // Shifting and XORing is a standard way to combine hashes
+        return std::hash<int>{}(p.x) ^ (std::hash<int>{}(p.y) << 1);
     }
 };
 

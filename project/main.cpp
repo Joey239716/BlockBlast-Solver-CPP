@@ -25,9 +25,9 @@ int main() {
 #include "imgui_impl_sdlrenderer2.h"
 #include <stdio.h>
 #include <SDL.h>
+#include "pieceLibrary.h"
 #include "board.h"
 #include "availablePieces.h"
-#include "pieceLibrary.h"
 #ifdef _WIN32
 #include <windows.h>        // SetProcessDPIAware()
 #endif
