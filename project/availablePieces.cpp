@@ -5,6 +5,6 @@ bool board1[3][3] = {};
 bool board2[3][3] = {};
 bool board3[3][3] = {};
 
-std::vector<Point> piece1;
-std::vector<Point> piece2;
-std::vector<Point> piece3;
+std::unordered_set<Point> piece1;
+std::unordered_set<Point> piece2;
+std::unordered_set<Point> piece3;

@@ -82,14 +82,14 @@ int main() {
 
         ImGui::End();
 
-        ImGui::Begin("Another Window");
+        ImGui::Begin("Given Piece 1");
          for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 if (col > 0) ImGui::SameLine();
                 char id[16];
                 snprintf(id, sizeof(id), "##B%d_%d", row, col);
 
-                if (board[row][col]) {
+                if (board1[row][col]) {
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
                 }
                 else {
@@ -97,7 +97,51 @@ int main() {
                 }
 
                 if (ImGui::Button(id, ImVec2(25, 25))) {
-                    board[row][col] = !board[row][col];
+                    board1[row][col] = !board1[row][col];
+                }
+                ImGui::PopStyleColor();
+            }
+        }
+        ImGui::End();
+
+        ImGui::Begin("Given Piece 2");
+         for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                if (col > 0) ImGui::SameLine();
+                char id[16];
+                snprintf(id, sizeof(id), "##C%d_%d", row, col);
+
+                if (board2[row][col]) {
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
+                }
+                else {
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
+                }
+
+                if (ImGui::Button(id, ImVec2(25, 25))) {
+                    board2[row][col] = !board2[row][col];
+                }
+                ImGui::PopStyleColor();
+            }
+        }
+        ImGui::End();
+
+        ImGui::Begin("Given Piece 3");
+         for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                if (col > 0) ImGui::SameLine();
+                char id[16];
+                snprintf(id, sizeof(id), "##D%d_%d", row, col);
+
+                if (board3[row][col]) {
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 0, 0, 1));
+                }
+                else {
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1));
+                }
+
+                if (ImGui::Button(id, ImVec2(25, 25))) {
+                    board3[row][col] = !board3[row][col];
                 }
                 ImGui::PopStyleColor();
             }
