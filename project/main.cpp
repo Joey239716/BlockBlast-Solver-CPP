@@ -247,7 +247,10 @@ int main() {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
         if (ImGui::Button("  Find Solution  ", ImVec2(160, 38))) {
             memcpy(displayBoard, board, sizeof(board));
-            result = solver.Solve(piece1, piece2, piece3, board);
+            int tempBoard[8][8];
+            memcpy(tempBoard, board, sizeof(board));
+            solver.Solve(piece1, piece2, piece3, tempBoard, false);
+            result = solver.Solve(piece1, piece2, piece3, board, true);
             showSolution = true;
 
             if (result.found) {
