@@ -80,7 +80,7 @@ void BlockBlastSolver::canSolve(int fittedPieces, int score, int board[8][8])
         return;
     }
 
-    if (score + maxPossibleScore(board) <= maxResult)
+    if (score + maxPossibleScore(board) < maxResult)
         return;
 
     struct PieceCandidate {
@@ -162,6 +162,36 @@ void BlockBlastSolver::canSolve(int fittedPieces, int score, int board[8][8])
 
 int BlockBlastSolver::simulateBlast(int tempBoard[8][8])
 {
+    // Compute which points will be cleared
+    std::unordered_set<Point, PointHash> willDisappear;
+    std::vector<Point> filledInPoints;
+
+    for (size_t r = 0; r < 8; ++r)
+    {
+        filledInPoints.clear();
+        for (size_t c = 0; c < 8; ++c)
+        {
+            Point curPoint = {(int)c, (int)r};
+            if (tempBoard[r][c] != 0)
+                filledInPoints.push_back(curPoint);
+        }
+        if (filledInPoints.size() == 8)
+            willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
+    }
+
+    for (size_t c = 0; c < 8; ++c)
+    {
+        filledInPoints.clear();
+        for (size_t r = 0; r < 8; ++r)
+        {
+            Point curPoint = {(int)c, (int)r};
+            if (tempBoard[r][c] != 0)
+                filledInPoints.push_back(curPoint);
+        }
+        if (filledInPoints.size() == 8)
+            willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
+    }
+
     if (cachingEnabled)
     {
         size_t key = hashBoard(tempBoard);
@@ -169,86 +199,25 @@ int BlockBlastSolver::simulateBlast(int tempBoard[8][8])
         if (it != blastCache.end())
         {
             cacheHits++;
+            // Still apply the blast to the board even on a cache hit
+            for (const auto &point : willDisappear)
+                tempBoard[point.y][point.x] = 0;
             return it->second;
         }
 
-        std::unordered_set<Point, PointHash> willDisappear;
-        std::vector<Point> filledInPoints;
-        int pieceScore = 0;
-
-        for (size_t r = 0; r < 8; ++r)
-        {
-            filledInPoints.clear();
-            for (size_t c = 0; c < 8; ++c)
-            {
-                Point curPoint = {(int)c, (int)r};
-                if (tempBoard[r][c] != 0)
-                    filledInPoints.push_back(curPoint);
-            }
-            if (filledInPoints.size() == 8)
-                willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
-        }
-
-        for (size_t c = 0; c < 8; ++c)
-        {
-            filledInPoints.clear();
-            for (size_t r = 0; r < 8; ++r)
-            {
-                Point curPoint = {(int)c, (int)r};
-                if (tempBoard[r][c] != 0)
-                    filledInPoints.push_back(curPoint);
-            }
-            if (filledInPoints.size() == 8)
-                willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
-        }
+        int pieceScore = (int)willDisappear.size();
+        blastCache[key] = pieceScore;
 
         for (const auto &point : willDisappear)
-        {
             tempBoard[point.y][point.x] = 0;
-            pieceScore += 1;
-        }
 
-        blastCache[key] = pieceScore;
         return pieceScore;
     }
     else
     {
-        std::unordered_set<Point, PointHash> willDisappear;
-        std::vector<Point> filledInPoints;
-        int pieceScore = 0;
-
-        for (size_t r = 0; r < 8; ++r)
-        {
-            filledInPoints.clear();
-            for (size_t c = 0; c < 8; ++c)
-            {
-                Point curPoint = {(int)c, (int)r};
-                if (tempBoard[r][c] != 0)
-                    filledInPoints.push_back(curPoint);
-            }
-            if (filledInPoints.size() == 8)
-                willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
-        }
-
-        for (size_t c = 0; c < 8; ++c)
-        {
-            filledInPoints.clear();
-            for (size_t r = 0; r < 8; ++r)
-            {
-                Point curPoint = {(int)c, (int)r};
-                if (tempBoard[r][c] != 0)
-                    filledInPoints.push_back(curPoint);
-            }
-            if (filledInPoints.size() == 8)
-                willDisappear.insert(filledInPoints.begin(), filledInPoints.end());
-        }
-
+        int pieceScore = (int)willDisappear.size();
         for (const auto &point : willDisappear)
-        {
             tempBoard[point.y][point.x] = 0;
-            pieceScore += 1;
-        }
-
         return pieceScore;
     }
 }
