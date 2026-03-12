@@ -9,6 +9,7 @@ interface UseGridReturn {
   pieces:         (Point[] | null)[]
   activePieceIdx: number | null
   toggleCell:     (row: number, col: number) => void
+  setCell:        (row: number, col: number, value: boolean) => void
   setPiece:       (idx: number, points: Point[] | null) => void
   setActivePiece: (idx: number | null) => void
   resetAll:       () => void
@@ -23,6 +24,15 @@ export function useGrid(): UseGridReturn {
     setBoard(prev => {
       const next = prev.map(r => [...r])
       next[row][col] = !next[row][col]
+      return next
+    })
+  }, [])
+
+  const setCell = useCallback((row: number, col: number, value: boolean) => {
+    setBoard(prev => {
+      if (prev[row][col] === value) return prev
+      const next = prev.map(r => [...r])
+      next[row][col] = value
       return next
     })
   }, [])
@@ -45,5 +55,5 @@ export function useGrid(): UseGridReturn {
     setActivePieceIdx(null)
   }, [])
 
-  return { board, pieces, activePieceIdx, toggleCell, setPiece, setActivePiece, resetAll }
+  return { board, pieces, activePieceIdx, toggleCell, setCell, setPiece, setActivePiece, resetAll }
 }

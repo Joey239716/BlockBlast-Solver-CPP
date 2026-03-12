@@ -14,7 +14,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   return (
-    <nav className="sticky top-0 z-50 h-14 flex items-center justify-between px-6 border-b border-white/[0.06] bg-bg-base/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 h-14 flex items-center justify-between px-6 border-b border-white/[0.06] bg-[#080810]">
       {/* Logo */}
       <div className="flex items-center gap-2.5 select-none">
         <div

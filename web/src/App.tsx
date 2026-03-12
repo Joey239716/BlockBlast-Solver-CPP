@@ -9,6 +9,7 @@ import { LoadingOverlay } from '@/components/LoadingOverlay'
 import { useGrid } from '@/hooks/useGrid'
 import { useSolver } from '@/hooks/useSolver'
 import { PIECE_COLORS } from '@/types/solver'
+import { BackgroundCanvas } from '@/components/BackgroundCanvas'
 
 type Tab = 'setup' | 'solution'
 
@@ -49,6 +50,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-base text-white">
+      <BackgroundCanvas />
+      <div className="relative" style={{ zIndex: 10 }}>
       <LoadingOverlay visible={solver.loading} />
       <Navbar activeTab={tab} onTabChange={switchTab} />
 
@@ -85,6 +88,7 @@ export default function App() {
                     grid.activePieceIdx !== null ? PIECE_COLORS[grid.activePieceIdx] : null
                   }
                   onCellToggle={grid.toggleCell}
+                  onCellSet={grid.setCell}
                 />
               </section>
 
@@ -134,6 +138,7 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+      </div>
     </div>
   )
 }
