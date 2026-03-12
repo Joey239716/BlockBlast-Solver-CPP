@@ -3,9 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlockBlast Solver</title>
-    <!-- Emscripten-generated WASM glue; defines window.createSolverModule -->
-    <script src="/solver.js"></script>
+    <title>Block Blast Solver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Emscripten WASM glue — defines window.createSolverModule (or window.Module) -->
+    <!-- If you used build-wasm.sh, this file is web/public/index.js              -->
+    <script src="/index.js" onerror="window.__wasmLoadError=true"></script>
   </head>
   <body>
     <div id="root"></div>
