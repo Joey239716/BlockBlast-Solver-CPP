@@ -10,6 +10,7 @@ interface UseGridReturn {
   activePieceIdx: number | null
   toggleCell:     (row: number, col: number) => void
   setCell:        (row: number, col: number, value: boolean) => void
+  loadBoard:      (newBoard: boolean[][]) => void
   setPiece:       (idx: number, points: Point[] | null) => void
   setActivePiece: (idx: number | null) => void
   resetAll:       () => void
@@ -37,6 +38,10 @@ export function useGrid(): UseGridReturn {
     })
   }, [])
 
+  const loadBoard = useCallback((newBoard: boolean[][]) => {
+    setBoard(newBoard.map(r => [...r]))
+  }, [])
+
   const setPiece = useCallback((idx: number, points: Point[] | null) => {
     setPieces(prev => {
       const next = [...prev]
@@ -55,5 +60,5 @@ export function useGrid(): UseGridReturn {
     setActivePieceIdx(null)
   }, [])
 
-  return { board, pieces, activePieceIdx, toggleCell, setCell, setPiece, setActivePiece, resetAll }
+  return { board, pieces, activePieceIdx, toggleCell, setCell, loadBoard, setPiece, setActivePiece, resetAll }
 }

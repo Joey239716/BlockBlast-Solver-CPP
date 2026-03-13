@@ -38,8 +38,8 @@ export function StepControls({
         disabled={isLast && !autoplay.isPlaying}
         whileTap={{ scale: 0.95 }}
       >
-        <span className="text-lg leading-none">
-          {autoplay.isPlaying ? '⏸' : '▶'}
+        <span className="leading-none flex items-center justify-center">
+          {autoplay.isPlaying ? <PauseIcon /> : <PlayIcon />}
         </span>
         <span className="text-[10px] font-medium tracking-widest uppercase">
           {autoplay.isPlaying ? 'Pause' : 'Play'}
@@ -93,6 +93,23 @@ function ChevronLeft() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
       <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  )
+}
+
+function PlayIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M5 3.5L13 8L5 12.5V3.5Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function PauseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="4" y="3" width="3" height="10" rx="1" fill="currentColor" />
+      <rect x="9" y="3" width="3" height="10" rx="1" fill="currentColor" />
     </svg>
   )
 }

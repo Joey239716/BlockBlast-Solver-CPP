@@ -6,12 +6,14 @@ import { PieceSelector } from '@/components/PieceSelector'
 import { SolveButton } from '@/components/SolveButton'
 import { SolutionViewer } from '@/components/SolutionViewer'
 import { LoadingOverlay } from '@/components/LoadingOverlay'
+import { LandingScreen } from '@/components/LandingScreen'
 import { useGrid } from '@/hooks/useGrid'
 import { useSolver } from '@/hooks/useSolver'
 import { PIECE_COLORS } from '@/types/solver'
 import { BackgroundCanvas } from '@/components/BackgroundCanvas'
+import OpenCVTestPage from '@/openCVTest'
 
-type Tab = 'setup' | 'solution'
+type Tab = 'setup' | 'solution' | 'opencv'
 
 const tabVariants = {
   enter:  (dir: number) => ({ opacity: 0, x: dir * 24 }),
@@ -20,6 +22,7 @@ const tabVariants = {
 }
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [tab,    setTab]    = useState<Tab>('setup')
   const [tabDir, setTabDir] = useState(1)
 
@@ -29,8 +32,9 @@ export default function App() {
   // Init WASM on mount
   useEffect(() => { void solver.init() }, [solver.init])
 
+  const TAB_ORDER: Tab[] = ['setup', 'solution', 'opencv']
   function switchTab(next: Tab) {
-    setTabDir(next === 'solution' ? 1 : -1)
+    setTabDir(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? 1 : -1)
     setTab(next)
   }
 
@@ -51,7 +55,16 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg-base text-white">
       <BackgroundCanvas />
-      <div className="relative" style={{ zIndex: 10 }}>
+      <AnimatePresence mode="wait">
+        {showLanding ? (
+          <div key="landing" className="relative" style={{ zIndex: 10 }}>
+            <LandingScreen
+              onSolveManually={() => { setShowLanding(false); setTab('setup') }}
+              onUploadScreenshot={() => {}}
+            />
+          </div>
+        ) : (
+      <div key="app" className="relative" style={{ zIndex: 10 }}>
       <LoadingOverlay visible={solver.loading} />
       <Navbar activeTab={tab} onTabChange={switchTab} />
 
@@ -70,8 +83,13 @@ export default function App() {
             >
               {/* WASM error banner */}
               {solver.error && !solver.loading && (
-                <div className="px-4 py-3 rounded-lg border border-accent-coral/25 bg-accent-coral/[0.07] text-[12px] text-accent-coral/80">
-                  ⚠ {solver.error}
+                <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-accent-coral/25 bg-accent-coral/[0.07] text-[12px] text-accent-coral/80">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="shrink-0">
+                    <path d="M7 1L13 12H1L7 1Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                    <path d="M7 5.5V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <circle cx="7" cy="10" r="0.6" fill="currentColor"/>
+                  </svg>
+                  {solver.error}
                 </div>
               )}
 
@@ -110,7 +128,7 @@ export default function App() {
                 solving={solver.loading}
               />
             </motion.div>
-          ) : (
+          ) : tab === 'solution' ? (
             <motion.div
               key="solution"
               custom={tabDir}
@@ -135,18 +153,43 @@ export default function App() {
                 </div>
               )}
             </motion.div>
+          ) : (
+            <motion.div
+              key="opencv"
+              custom={tabDir}
+              variants={tabVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="pt-8"
+            >
+              <OpenCVTestPage
+                onBoardLoaded={grid.loadBoard}
+                onPiecesLoaded={pieces => pieces.forEach((p, i) => grid.setPiece(i, p))}
+                onGoToSetup={() => switchTab('setup')}
+              />
+            </motion.div>
           )}
         </AnimatePresence>
       </main>
       </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold tracking-widest uppercase text-white/20 mb-3">
-      {children}
-    </p>
+    <div className="flex items-center gap-2 mb-3">
+      <span
+        className="text-[9px] font-bold tracking-[0.22em] uppercase"
+        style={{ color: '#00d4ff', textShadow: '0 0 8px rgba(0,212,255,0.5)' }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px bg-white/[0.05]" />
+    </div>
   )
 }

@@ -57,8 +57,14 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="text-5xl">⚠️</div>
-        <p className="text-[18px] font-semibold text-white/80">No Solution Found</p>
+        <div className="w-14 h-14 rounded-2xl border border-accent-coral/30 bg-accent-coral/[0.08] flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <path d="M14 3L26 24H2L14 3Z" stroke="#ff6b6b" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M14 11V17" stroke="#ff6b6b" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="14" cy="20.5" r="1" fill="#ff6b6b"/>
+          </svg>
+        </div>
+        <p className="text-[18px] font-russo tracking-wide text-white/80">No Solution Found</p>
         <p className="text-[14px] text-white/35 text-center max-w-[280px]">
           The pieces can't be placed on this board. Try adjusting your setup.
         </p>
@@ -154,7 +160,7 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
           transition={{ delay: 0.4, type: 'spring', stiffness: 400, damping: 30 }}
         >
           <p
-            className="text-[22px] font-bold"
+            className="text-[26px] font-russo tracking-wider"
             style={{
               background: 'linear-gradient(135deg, #39ff88, #00d4ff)',
               WebkitBackgroundClip: 'text',

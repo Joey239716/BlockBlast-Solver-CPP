@@ -19,8 +19,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans:  ['Chakra Petch', 'system-ui', 'sans-serif'],
+        russo: ['Russo One', 'sans-serif'],
+        mono:  ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       maxWidth: { page: '600px' },
       borderColor: {
