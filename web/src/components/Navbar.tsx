@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-type Tab = 'setup' | 'solution' | 'opencv'
+type Tab = 'setup' | 'solution'
 
 interface NavbarProps {
   activeTab:   Tab
@@ -10,7 +10,6 @@ interface NavbarProps {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'setup',    label: 'Setup'    },
   { id: 'solution', label: 'Solution' },
-  { id: 'opencv',   label: 'OpenCV'   },
 ]
 
 export function Navbar({ activeTab, onTabChange }: NavbarProps) {

@@ -1,13 +1,10 @@
 import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useOpenCV } from './hooks/useOpenCV'
-import type { Point } from '@/types/solver'
-import { normalizePiece } from '@/lib/pieces'
 
 interface Props {
-  onBoardLoaded:  (board: boolean[][]) => void
-  onPiecesLoaded: (pieces: (Point[] | null)[]) => void
-  onGoToSetup:    () => void
+  onBoardLoaded: (board: boolean[][]) => void
+  onGoToSetup:   () => void
 }
 
 // ─── Bevel-based cell scoring ─────────────────────────────────────────────────
@@ -60,14 +57,13 @@ function detectBoardCells(
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSetup }: Props) {
+export default function OpenCVTestPage({ onBoardLoaded, onGoToSetup }: Props) {
   const { cv, ready, progress } = useOpenCV()
   const canvasRef    = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const [status,         setStatus]         = useState('')
-  const [detectedBoard,  setDetectedBoard]  = useState<boolean[][] | null>(null)
-  const [detectedPieces, setDetectedPieces] = useState<(Point[] | null)[] | null>(null)
+  const [status,        setStatus]        = useState('')
+  const [detectedBoard, setDetectedBoard] = useState<boolean[][] | null>(null)
 
   const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -76,7 +72,6 @@ export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSe
 
     setStatus('Processing…')
     setDetectedBoard(null)
-    setDetectedPieces(null)
 
     try {
       const bitmap = await createImageBitmap(file)
@@ -146,137 +141,6 @@ export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSe
         const cw    = bestRect.width  / 8
         const ch    = bestRect.height / 8
 
-        // ── Adaptive V threshold from empty board cells ───────────────────
-        // The background color varies across game themes, so a fixed threshold
-        // is unreliable. Instead, sample the empty board cells (which we already
-        // know from board detection) to measure the actual background brightness.
-        // Piece blocks are always significantly brighter than the background,
-        // so threshold = median(background V) + 55 works for any theme.
-        const bgVSamples: number[] = []
-        for (let r = 0; r < 8; r++) {
-          for (let c = 0; c < 8; c++) {
-            if (!board[r][c]) {
-              const px = Math.round(bestRect.x + (c + 0.5) * cw)
-              const py = Math.round(bestRect.y + (r + 0.5) * ch)
-              if (px >= 0 && px < w && py >= 0 && py < h) {
-                const idx = (py * w + px) * 4
-                // max(R,G,B) ≡ HSV Value channel scaled to 0–255
-                bgVSamples.push(Math.max(raw[idx], raw[idx + 1], raw[idx + 2]))
-              }
-            }
-          }
-        }
-        bgVSamples.sort((a, b) => a - b)
-        const bgV       = bgVSamples.length > 0 ? bgVSamples[Math.floor(bgVSamples.length / 2)] : 80
-        const vThreshold = Math.min(220, bgV + 55)
-
-        // ── OpenCV: detect piece blocks in tray (HSV Value mask) ────────────
-        // Strategy: all piece blocks are significantly brighter than background.
-        // Threshold on the V channel using the adaptive value computed above.
-        const pieces: (Point[] | null)[] = [null, null, null]
-        const trayY = bestRect.y + bestRect.height
-        // Cap tray scan at 28% of image height — the piece tray in Block Blast
-        // sits just below the board and never extends to ad banners at the bottom.
-        const trayH = Math.min(h - trayY, Math.round(h * 0.28))
-        const ORANGE = new cv.Scalar(60, 160, 255, 255)
-
-        if (trayH > 20) {
-          type Block = { cx: number; cy: number; sz: number }
-
-          for (let slot = 0; slot < 3; slot++) {
-            const slotX = Math.round(slot       * w / 3)
-            const slotW = Math.round((slot + 1) * w / 3) - slotX
-
-            const roi      = src.roi(new cv.Rect(slotX, trayY, slotW, trayH))
-            const roiRGB   = new cv.Mat()
-            const roiHSV   = new cv.Mat()
-            const roiBlur  = new cv.Mat()
-            const channels = new cv.MatVector()
-            const roiBin   = new cv.Mat()
-            const roiCnts  = new cv.MatVector()
-            const roiHier  = new cv.Mat()
-
-            // Convert RGBA → RGB → HSV
-            cv.cvtColor(roi, roiRGB, cv.COLOR_RGBA2RGB)
-            cv.cvtColor(roiRGB, roiHSV, cv.COLOR_RGB2HSV)
-
-            // Extract the V (Value) channel — index 2 in HSV
-            cv.split(roiHSV, channels)
-            const roiV = channels.get(2).clone()
-            channels.delete()
-
-            // Light blur to suppress noise before threshold
-            cv.GaussianBlur(roiV, roiBlur, new cv.Size(3, 3), 0)
-
-            cv.threshold(roiBlur, roiBin, vThreshold, 255, cv.THRESH_BINARY)
-
-            cv.findContours(roiBin, roiCnts, roiHier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-
-            const estCell  = slotW / 6
-            const minCArea = (estCell * 0.2) ** 2
-            const maxCArea = (estCell * 2.8) ** 2
-            const blocks: Block[] = []
-
-            for (let i = 0; i < roiCnts.size(); i++) {
-              const r      = cv.boundingRect(roiCnts.get(i))
-              const area   = r.width * r.height
-              const aspect = r.width / r.height
-              if (area < minCArea || area > maxCArea) continue
-              if (aspect < 0.3 || aspect > 3.2)      continue
-              blocks.push({
-                cx: slotX + r.x + r.width  / 2,   // full-image x
-                cy:          r.y + r.height / 2,   // relative to tray top
-                sz: (r.width + r.height) / 2,
-              })
-            }
-
-            if (blocks.length >= 2) {
-              // Cell size = min pairwise center distance (= actual block spacing)
-              let cellSz = Infinity
-              for (let i = 0; i < blocks.length; i++)
-                for (let j = i + 1; j < blocks.length; j++) {
-                  const dx = blocks[i].cx - blocks[j].cx
-                  const dy = blocks[i].cy - blocks[j].cy
-                  cellSz = Math.min(cellSz, Math.sqrt(dx * dx + dy * dy))
-                }
-
-              // Draw overlay at each detected block
-              for (const { cx, cy, sz } of blocks)
-                cv.rectangle(display,
-                  new cv.Point(Math.round(cx - sz / 2) + 1, Math.round(trayY + cy - sz / 2) + 1),
-                  new cv.Point(Math.round(cx + sz / 2) - 1, Math.round(trayY + cy + sz / 2) - 1),
-                  ORANGE, 2,
-                )
-
-              // Snap to grid using real block spacing
-              const minCX = Math.min(...blocks.map(b => b.cx))
-              const minCY = Math.min(...blocks.map(b => b.cy))
-              const seen  = new Set<string>()
-              const pts: Point[] = []
-              for (const { cx, cy } of blocks) {
-                const gx  = Math.round((cx - minCX) / cellSz)
-                const gy  = Math.round((cy - minCY) / cellSz)
-                const key = `${gx},${gy}`
-                if (!seen.has(key)) { seen.add(key); pts.push({ x: gx, y: gy }) }
-              }
-              if (pts.length > 0) pieces[slot] = normalizePiece(pts)
-
-            } else if (blocks.length === 1) {
-              const b = blocks[0]
-              cv.rectangle(display,
-                new cv.Point(Math.round(b.cx - b.sz / 2) + 1, Math.round(trayY + b.cy - b.sz / 2) + 1),
-                new cv.Point(Math.round(b.cx + b.sz / 2) - 1, Math.round(trayY + b.cy + b.sz / 2) - 1),
-                ORANGE, 2,
-              )
-              pieces[slot] = [{ x: 0, y: 0 }]
-            }
-
-            roi.delete(); roiRGB.delete(); roiHSV.delete()
-            roiV.delete(); roiBlur.delete()
-            roiBin.delete(); roiCnts.delete(); roiHier.delete()
-          }
-        }
-
         // ── Draw board overlay ────────────────────────────────────────────
         const CYAN = new cv.Scalar(0, 220, 255, 255)
         const GRAY = new cv.Scalar(60, 60, 80, 255)
@@ -308,11 +172,9 @@ export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSe
             )
           }
 
-        const filled     = board.flat().filter(Boolean).length
-        const pieceCount = pieces.filter(Boolean).length
-        setStatus(`Board detected — ${filled}/64 cells · ${pieceCount}/3 pieces found`)
+        const filled = board.flat().filter(Boolean).length
+        setStatus(`Board detected — ${filled}/64 cells filled`)
         setDetectedBoard(board)
-        setDetectedPieces(pieces)
 
       } else {
         setStatus('No board found — try a clearer screenshot')
@@ -336,7 +198,6 @@ export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSe
   function handleApply() {
     if (!detectedBoard) return
     onBoardLoaded(detectedBoard)
-    if (detectedPieces) onPiecesLoaded(detectedPieces)
     onGoToSetup()
   }
 
@@ -415,46 +276,6 @@ export default function OpenCVTestPage({ onBoardLoaded, onPiecesLoaded, onGoToSe
               )),
             )}
           </div>
-
-          {detectedPieces && detectedPieces.some(Boolean) && (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-bold tracking-[0.22em] uppercase"
-                  style={{ color: '#ff9b3b', textShadow: '0 0 8px rgba(255,155,59,0.5)' }}>
-                  Detected Pieces
-                </span>
-                <div className="flex-1 h-px bg-white/[0.05]" />
-              </div>
-              <div className="flex gap-4 justify-center">
-                {detectedPieces.map((piece, i) => {
-                  if (!piece) return (
-                    <div key={i} className="flex items-center justify-center w-[80px] h-[80px]
-                      rounded-lg border border-white/[0.06] text-white/20 text-[11px]">
-                      empty
-                    </div>
-                  )
-                  const maxX   = Math.max(...piece.map(p => p.x))
-                  const maxY   = Math.max(...piece.map(p => p.y))
-                  const filled = new Set(piece.map(p => `${p.x},${p.y}`))
-                  return (
-                    <div key={i} className="inline-grid gap-[2px]"
-                      style={{ gridTemplateColumns: `repeat(${maxX + 1}, 16px)` }}>
-                      {Array.from({ length: maxY + 1 }, (_, r) =>
-                        Array.from({ length: maxX + 1 }, (_, c) => (
-                          <div key={`${r}-${c}`} className="rounded-[2px]" style={{
-                            width: 16, height: 16,
-                            background: filled.has(`${c},${r}`)
-                              ? 'linear-gradient(135deg, #ff9b3b, #ff6b6b)'
-                              : 'rgba(255,255,255,0.03)',
-                          }} />
-                        ))
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
 
           <motion.button
             className="relative w-full py-4 rounded-xl font-russo tracking-widest uppercase
