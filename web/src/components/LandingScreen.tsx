@@ -9,10 +9,15 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
   return (
     <motion.div
       className="relative min-h-screen flex flex-col overflow-hidden"
-      style={{ background: '#060608' }}
+      style={{ background: '#1a1a1a', fontFamily: "'Space Grotesk', sans-serif" }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.25 }}
     >
+      {/* Floating 3D cubes */}
+      <Cube3D size={52} color="#FCEE09" style={{ position: 'absolute', top: '18%', left: '4%', opacity: 0.5 }} delay={0.6} />
+      <Cube3D size={36} color="#00F5FF" style={{ position: 'absolute', top: '55%', left: '1%', opacity: 0.35 }} delay={0.9} />
+      <Cube3D size={44} color="#FCEE09" style={{ position: 'absolute', top: '30%', right: '3%', opacity: 0.4 }} delay={0.75} />
+
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 md:px-20 pt-7">
         <div className="flex items-center gap-2">
@@ -35,140 +40,141 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
         </motion.button>
       </nav>
 
-      {/* ── Centered hero text ── */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 pt-8">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          style={{
-            padding: '4px 14px', borderRadius: 100,
-            border: '1px solid rgba(252,238,9,0.22)',
-            background: 'rgba(252,238,9,0.05)',
-            color: 'rgba(252,238,9,0.7)',
-            fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
-          }}
-        >
-          ✦ FREE · RUNS IN YOUR BROWSER
-        </motion.div>
-
+      {/* Hero text */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6 pt-10">
         <motion.h1
-          className="font-black text-white leading-tight tracking-tight mt-5"
-          style={{ fontSize: 'clamp(34px, 5vw, 62px)', maxWidth: 680 }}
+          className="font-black text-white leading-tight tracking-tight"
+          style={{ fontSize: 'clamp(28px, 3.5vw, 46px)', maxWidth: 560 }}
           initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.15, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         >
-          Your Block Blast board,{' '}
-          <span style={{ color: '#FCEE09' }}>solved instantly.</span>
+          Your Block Blast Board,{' '}
+          <span style={{ color: '#FCEE09' }}>Solved Instantly.</span>
         </motion.h1>
 
         <motion.p
-          style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1.7, maxWidth: 460, marginTop: 14 }}
+          style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, lineHeight: 1.7, maxWidth: 400, marginTop: 12 }}
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
         >
-          AI-powered solver finds the optimal move sequence. Upload a screenshot or enter your board manually — no login required.
+          AI-powered solver finds the optimal move sequence. Upload a screenshot or enter your board manually.
         </motion.p>
 
         <motion.div
-          className="flex gap-3 flex-wrap justify-center mt-6"
+          className="flex gap-3 flex-wrap justify-center mt-7"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.45 }}
+          transition={{ delay: 0.35, duration: 0.45 }}
         >
           <motion.button
-            className="flex items-center gap-2 px-7 py-3.5 text-[13px] font-bold tracking-[0.08em] uppercase cursor-pointer"
-            style={{ background: '#FCEE09', border: '1px solid #FCEE09', borderRadius: 8, color: '#060608' }}
+            className="flex items-center gap-2 px-6 py-3 text-[13px] font-bold tracking-[0.06em] uppercase cursor-pointer"
+            style={{ background: '#FCEE09', border: '1px solid #FCEE09', borderRadius: 8, color: '#1a1a1a' }}
             onClick={onSolveManually}
-            whileHover={{ background: '#fff176', boxShadow: '0 0 28px rgba(252,238,9,0.4)' }}
+            whileHover={{ background: '#fff176', boxShadow: '0 0 24px rgba(252,238,9,0.35)' }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.1 }}
           >
             ▶ Solve Manually
           </motion.button>
           <motion.button
-            className="flex items-center gap-2 px-7 py-3.5 text-[13px] font-bold tracking-[0.08em] uppercase cursor-pointer"
+            className="flex items-center gap-2 px-6 py-3 text-[13px] font-bold tracking-[0.06em] uppercase cursor-pointer"
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.5)' }}
             onClick={onUploadScreenshot}
             whileHover={{ borderColor: 'rgba(255,255,255,0.28)', color: '#fff' }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.1 }}
           >
-            ⊞ Upload Screenshot
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V6M5 12l7-7 7 7"/></svg>
+            Upload Screenshot
           </motion.button>
         </motion.div>
       </div>
 
-      {/* ── Phone + floating cards ── */}
-      <div className="relative z-10 flex-1 flex items-start justify-center mt-2" style={{ minHeight: 500 }}>
+      {/* Phone + cards — flex row so cards hug the phone */}
+      <div className="relative z-10 flex-1 flex justify-center items-start mt-6">
+        <div className="flex items-start gap-4">
 
-        {/* Floating card: top-left */}
-        <FloatCard delay={0.65} style={{ position: 'absolute', left: '12%', top: '4%' }}>
-          <span className="font-black text-[22px] leading-none" style={{ color: '#FCEE09' }}>&lt;150ms</span>
-          <span className="font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>solve time</span>
-        </FloatCard>
+          {/* Left cards */}
+          <div className="flex flex-col gap-4" style={{ width: 195, paddingTop: 48 }}>
+            <FloatCard delay={0.75}>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-xl" style={{ background: 'rgba(252,238,9,0.1)', border: '1px solid rgba(252,238,9,0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="#FCEE09"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-black text-[22px] leading-none" style={{ color: '#FCEE09' }}>&lt;150ms</span>
+                  <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.35)' }}>solve time</span>
+                </div>
+              </div>
+            </FloatCard>
 
-        {/* Floating card: top-right */}
-        <FloatCard delay={0.75} style={{ position: 'absolute', right: '12%', top: '4%' }}>
-          <div className="flex items-center gap-2">
-            <span style={{ color: '#00F5FF', fontSize: 14 }}>✓</span>
-            <span className="font-semibold text-[13px]" style={{ color: 'rgba(255,255,255,0.85)' }}>Solution found!</span>
+            <FloatCard delay={0.85}>
+              <span className="text-[10px] font-mono mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>optimal sequence</span>
+              <MiniBoard />
+              <div className="flex items-center gap-1.5 mt-2">
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00F5FF' }} />
+                <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>Solution found</span>
+              </div>
+            </FloatCard>
           </div>
-          <span className="font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>optimal move sequence</span>
-        </FloatCard>
 
-        {/* Floating card: mid-left */}
-        <FloatCard delay={0.85} style={{ position: 'absolute', left: '6%', top: '42%' }}>
-          <span className="font-black text-[22px] leading-none" style={{ color: '#00F5FF' }}>99.4%</span>
-          <span className="font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>states pruned</span>
-        </FloatCard>
-
-        {/* Floating card: mid-right */}
-        <FloatCard delay={0.9} style={{ position: 'absolute', right: '6%', top: '42%' }}>
-          <span className="font-black text-[22px] leading-none" style={{ color: '#FCEE09' }}>38</span>
-          <span className="font-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>piece types</span>
-        </FloatCard>
-
-        {/* Floating badge: bottom-left */}
-        <FloatCard delay={1.0} style={{ position: 'absolute', left: '14%', bottom: '18%' }}>
-          <div className="flex items-center gap-2">
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FCEE09' }} />
-            <span className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>No login required</span>
+          {/* Phone */}
+          <div style={{ flexShrink: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: 'relative' }}
+            >
+              <motion.img
+                src="/iphone.png"
+                alt="BlockBlaster AI on mobile"
+                style={{ width: 380, height: 'auto', display: 'block', margin: '0 auto' }}
+                animate={{ y: [0, -7, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <motion.div
+                style={{
+                  position: 'absolute', bottom: 8, left: '50%', x: '-50%',
+                  width: 480, height: 36, borderRadius: '50%',
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
+                  filter: 'blur(10px)', pointerEvents: 'none',
+                }}
+                animate={{ scaleX: [1, 0.7, 1], opacity: [0.75, 0.25, 0.75] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </motion.div>
           </div>
-        </FloatCard>
 
-        {/* Floating badge: bottom-right */}
-        <FloatCard delay={1.05} style={{ position: 'absolute', right: '14%', bottom: '18%' }}>
-          <div className="flex items-center gap-2">
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00F5FF' }} />
-            <span className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Runs in browser</span>
+          {/* Right cards */}
+          <div className="flex flex-col gap-4" style={{ width: 195, paddingTop: 48 }}>
+            <FloatCard delay={0.7}>
+              <div className="flex gap-0.5 mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="#FCEE09"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                ))}
+              </div>
+              <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                "Gets the optimal move every time. Saved my streak!"
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: '#FCEE09', color: '#1a1a1a' }}>A</div>
+                <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.35)' }}>Alex K. · verified</span>
+              </div>
+            </FloatCard>
+
+            <FloatCard delay={0.9}>
+              <span className="text-[10px] font-mono mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>search efficiency</span>
+              <div className="flex items-end gap-1.5">
+                <PruningBars />
+                <span className="font-black text-[20px] leading-none mb-0.5" style={{ color: '#00F5FF' }}>99.4%</span>
+              </div>
+              <span className="text-[10px] font-mono mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>states pruned</span>
+            </FloatCard>
           </div>
-        </FloatCard>
 
-        {/* Phone image — centered, bleeds off bottom */}
-        {/* Entrance wrapper */}
-        <motion.div
-          style={{ position: 'relative', zIndex: 5 }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {/* Float loop */}
-          <motion.img
-            src="/iphone Image hero.png"
-            alt="BlockBlaster AI on mobile"
-            style={{ width: 1000, height: 'auto', display: 'block' }}
-            animate={{ y: [0, -7, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </motion.div>
-
-        {/* Subtle bottom glow under phone */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-          width: 400, height: 120,
-          background: 'radial-gradient(ellipse, rgba(252,238,9,0.12) 0%, transparent 70%)',
-          filter: 'blur(20px)',
-          pointerEvents: 'none',
-        }} />
+        </div>
       </div>
     </motion.div>
   )
@@ -176,21 +182,119 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
 
 // ─── Float Card ────────────────────────────────────────────────────────────────
 
-function FloatCard({ children, delay, style }: { children: React.ReactNode; delay: number; style?: React.CSSProperties }) {
+function FloatCard({ children, delay }: { children: React.ReactNode; delay: number }) {
   return (
     <motion.div
-      className="flex flex-col gap-1 px-4 py-3 rounded-2xl"
+      className="flex flex-col px-4 py-3 rounded-2xl"
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(12px)',
-        ...style,
+        backdropFilter: 'blur(16px)',
+        minWidth: 180,
       }}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
     >
       {children}
+    </motion.div>
+  )
+}
+
+// ─── Mini board graphic ────────────────────────────────────────────────────────
+
+function MiniBoard() {
+  const grid = [
+    [1,1,0,0,0,0],
+    [0,1,0,2,2,0],
+    [0,0,0,0,2,0],
+    [3,0,0,0,0,0],
+    [3,3,0,0,4,4],
+    [0,0,0,0,0,4],
+  ]
+  const colors: Record<number, string> = {
+    1: '#f5c030',
+    2: '#00F5FF',
+    3: '#ff6b6b',
+    4: '#a78bfa',
+  }
+  const bevel = (color: string) => ({
+    background: `linear-gradient(160deg, ${color} 0%, ${color}aa 100%)`,
+    boxShadow: [
+      'inset 0 2px 0 rgba(255,255,255,0.3)',
+      'inset 0 -2px 0 rgba(0,0,0,0.35)',
+      'inset -2px 0 0 rgba(0,0,0,0.15)',
+      '0 2px 4px rgba(0,0,0,0.4)',
+    ].join(', '),
+  })
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(6, 16px)', gap: 2,
+      background: '#2d1600', padding: 6, borderRadius: 8,
+      border: '1px solid rgba(0,0,0,0.5)',
+    }}>
+      {grid.flat().map((v, i) => (
+        <div key={i} style={{
+          width: 16, height: 16, borderRadius: 3,
+          ...(v ? bevel(colors[v]) : {
+            background: '#1c0e00',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6)',
+          }),
+        }} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Pruning bar graphic ───────────────────────────────────────────────────────
+
+function PruningBars() {
+  const bars = [0.3, 0.5, 0.7, 0.55, 0.9, 0.75, 1.0]
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 28 }}>
+      {bars.map((h, i) => (
+        <motion.div
+          key={i}
+          style={{ width: 5, borderRadius: 3, background: 'rgba(0,245,255,0.5)' }}
+          initial={{ height: 0 }}
+          animate={{ height: h * 28 }}
+          transition={{ delay: 0.9 + i * 0.05, duration: 0.4, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── 3D Cube ──────────────────────────────────────────────────────────────────
+
+function Cube3D({ size, color, style, delay }: { size: number; color: string; style?: React.CSSProperties; delay: number }) {
+  const s = size
+  const h = s * 0.5  // half for isometric top face height
+
+  const top   = `${s},0 ${s*2},${h} ${s},${s} 0,${h}`
+  const left  = `0,${h} ${s},${s} ${s},${s*2} 0,${s+h}`
+  const right = `${s},${s} ${s*2},${h} ${s*2},${s+h} ${s},${s*2}`
+
+  return (
+    <motion.div
+      style={{ position: 'absolute', zIndex: 1, pointerEvents: 'none', ...style }}
+      initial={{ opacity: 0, scale: 0.6 }}
+      animate={{ opacity: style?.opacity ?? 0.4, scale: 1, y: [0, -10, 0] }}
+      transition={{
+        opacity: { delay, duration: 0.6 },
+        scale:   { delay, duration: 0.6 },
+        y:       { delay: delay + 0.6, duration: 5, repeat: Infinity, ease: 'easeInOut' },
+      }}
+    >
+      <svg width={s * 2} height={s * 2} viewBox={`0 0 ${s*2} ${s*2}`} fill="none">
+        <polygon points={top}   fill={color}        fillOpacity={0.9} />
+        <polygon points={left}  fill={color}        fillOpacity={0.4} />
+        <polygon points={right} fill={color}        fillOpacity={0.6} />
+        {/* Edge lines */}
+        <polygon points={top}   fill="none" stroke={color} strokeOpacity={0.3} strokeWidth={0.5} />
+        <polygon points={left}  fill="none" stroke={color} strokeOpacity={0.3} strokeWidth={0.5} />
+        <polygon points={right} fill="none" stroke={color} strokeOpacity={0.3} strokeWidth={0.5} />
+      </svg>
     </motion.div>
   )
 }

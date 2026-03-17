@@ -7,20 +7,21 @@ import { PIECE_COLOR_VALUES, PIECE_GLOW_VALUES } from '@/types/solver'
 
 function emptyCellStyle(): React.CSSProperties {
   return {
-    background: 'rgb(18, 19, 36)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.55)',
+    background: '#1c0e00',
+    border: '1px solid rgba(0,0,0,0.5)',
+    boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.7)',
   }
 }
 
 function filledCellStyle(): React.CSSProperties {
   return {
-    background: 'linear-gradient(155deg, #7272e8 0%, #4646c2 100%)',
-    border: '1px solid rgba(130,130,230,0.55)',
+    background: 'linear-gradient(160deg, #f5c030 0%, #c87d00 100%)',
+    border: '1px solid rgba(255,200,60,0.4)',
     boxShadow: [
-      'inset 0 1px 0 rgba(255,255,255,0.28)',
-      'inset 0 -2px 0 rgba(0,0,0,0.38)',
-      '0 2px 5px rgba(0,0,0,0.45)',
+      'inset 0 3px 0 rgba(255,255,255,0.35)',
+      'inset 0 -3px 0 rgba(0,0,0,0.4)',
+      'inset -3px 0 0 rgba(0,0,0,0.2)',
+      '0 3px 6px rgba(0,0,0,0.5)',
     ].join(', '),
   }
 }
@@ -29,9 +30,15 @@ function pieceCellStyle(color: PieceColor, opacity = 1): React.CSSProperties {
   const hex  = PIECE_COLOR_VALUES[color]
   const glow = PIECE_GLOW_VALUES[color]
   return {
-    background: `${hex}${opacity < 1 ? Math.round(opacity * 255).toString(16).padStart(2,'0') : 'b3'}`,
-    border: `1px solid ${hex}`,
-    boxShadow: `0 0 12px ${glow}, inset 0 1px 0 rgba(255,255,255,0.15)`,
+    background: `${hex}${opacity < 1 ? Math.round(opacity * 255).toString(16).padStart(2,'0') : ''}`,
+    border: `1px solid ${hex}99`,
+    boxShadow: [
+      'inset 0 3px 0 rgba(255,255,255,0.3)',
+      'inset 0 -3px 0 rgba(0,0,0,0.35)',
+      'inset -3px 0 0 rgba(0,0,0,0.15)',
+      `0 0 10px ${glow}`,
+      '0 3px 6px rgba(0,0,0,0.4)',
+    ].join(', '),
   }
 }
 
@@ -92,9 +99,11 @@ export function Grid(props: GridProps) {
       style={{
         width:      '100%',
         maxWidth:   'min(480px, calc(100vw - 2.5rem))',
-        border:     active ? '1.5px solid rgba(0,212,255,0.22)' : '1.5px solid rgba(255,255,255,0.05)',
-        boxShadow:  active ? '0 0 28px rgba(0,212,255,0.08), 0 0 0 3px rgba(0,212,255,0.04)' : 'none',
-        padding:    '3px',
+        background: '#2d1600',
+        border:     active ? '2px solid rgba(245,192,48,0.35)' : '2px solid rgba(0,0,0,0.6)',
+        boxShadow:  active ? '0 0 28px rgba(245,192,48,0.15)' : '0 8px 32px rgba(0,0,0,0.6)',
+        padding:    '6px',
+        borderRadius: '14px',
       }}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => { setIsHovering(false); setHoverCell(null) }}

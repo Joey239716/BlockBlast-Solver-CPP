@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Navbar } from '@/components/Navbar'
 import { Grid } from '@/components/Grid'
@@ -6,7 +7,6 @@ import { PieceSelector } from '@/components/PieceSelector'
 import { SolveButton } from '@/components/SolveButton'
 import { SolutionViewer } from '@/components/SolutionViewer'
 import { LoadingOverlay } from '@/components/LoadingOverlay'
-import { LandingScreen } from '@/components/LandingScreen'
 import { UploadModal } from '@/components/UploadModal'
 import { useGrid } from '@/hooks/useGrid'
 import { useSolver } from '@/hooks/useSolver'
@@ -36,10 +36,11 @@ function useIsDesktop() {
 }
 
 export default function App() {
-  const [showLanding, setShowLanding] = useState(true)
-  const [tab,         setTab]         = useState<Tab>('setup')
-  const [tabDir,      setTabDir]      = useState(1)
-  const [showUpload,  setShowUpload]  = useState(false)
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [tab,        setTab]       = useState<Tab>('setup')
+  const [tabDir,     setTabDir]    = useState(1)
+  const [showUpload, setShowUpload] = useState(() => searchParams.get('upload') === '1')
   const isDesktop = useIsDesktop()
 
   const grid   = useGrid()
@@ -54,12 +55,6 @@ export default function App() {
   function switchTab(next: Tab) {
     setTabDir(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? 1 : -1)
     setTab(next)
-  }
-
-  function openUpload() {
-    setShowLanding(false)
-    setTab('setup')
-    setShowUpload(true)
   }
 
   async function handleSolve() {
@@ -84,21 +79,12 @@ export default function App() {
         onFile={detect}
       />
 
-      <AnimatePresence mode="wait">
-        {showLanding ? (
-          <div key="landing" className="relative" style={{ zIndex: 10 }}>
-            <LandingScreen
-              onSolveManually={() => { setShowLanding(false); setTab('setup') }}
-              onUploadScreenshot={openUpload}
-            />
-          </div>
-        ) : (
-          <div key="app" className="relative" style={{ zIndex: 10 }}>
-            <LoadingOverlay visible={solver.loading} />
-            <Navbar activeTab={tab} onTabChange={switchTab} />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+        <LoadingOverlay visible={solver.loading} />
+        <Navbar activeTab={tab} onTabChange={switchTab} onHome={() => navigate('/')} />
 
-            <main className="max-w-page md:max-w-[960px] mx-auto px-5 pb-20">
-              <AnimatePresence mode="wait" custom={tabDir}>
+        <main className="max-w-page md:max-w-[960px] mx-auto px-5 pb-20">
+          <AnimatePresence mode="wait" custom={tabDir}>
                 {tab === 'setup' ? (
                   <motion.div
                     key="setup"
@@ -228,11 +214,9 @@ export default function App() {
                     )}
                   </motion.div>
                 )}
-              </AnimatePresence>
-            </main>
-          </div>
-        )}
-      </AnimatePresence>
+          </AnimatePresence>
+        </main>
+      </motion.div>
     </div>
   )
 }

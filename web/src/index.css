@@ -8,9 +8,9 @@
   html { color-scheme: dark; }
 
   body {
-    background: #060608;
+    background: #1a1a1a;
     color: #e8e8f5;
-    font-family: 'Roboto', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;

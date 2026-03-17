@@ -5,6 +5,7 @@ type Tab = 'setup' | 'solution'
 interface NavbarProps {
   activeTab:   Tab
   onTabChange: (tab: Tab) => void
+  onHome:      () => void
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -12,14 +13,14 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'solution', label: 'Solution' },
 ]
 
-export function Navbar({ activeTab, onTabChange }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, onHome }: NavbarProps) {
   return (
     <nav
       className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 md:px-6 backdrop-blur-md"
       style={{ borderBottom: '1px solid rgba(252,238,9,0.15)', background: 'rgba(6,6,8,0.92)' }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 select-none shrink-0">
+      <div className="flex items-center gap-2 select-none shrink-0 cursor-pointer" onClick={onHome}>
         <BlockIcon />
         <span className="font-bold text-[14px] md:text-[15px] tracking-tight leading-none">
           <span className="text-white">Block</span>
