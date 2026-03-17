@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
+import { useSettings } from '@/context/SettingsContext'
 
-type Tab = 'setup' | 'solution'
+export type Tab = 'setup' | 'solution' | 'settings'
 
 interface NavbarProps {
   activeTab:   Tab
@@ -11,63 +12,67 @@ interface NavbarProps {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'setup',    label: 'Setup'    },
   { id: 'solution', label: 'Solution' },
+  { id: 'settings', label: 'Settings' },
 ]
 
 export function Navbar({ activeTab, onTabChange, onHome }: NavbarProps) {
+  const { theme } = useSettings()
   return (
     <nav
-      className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 md:px-6 backdrop-blur-md"
-      style={{ borderBottom: '1px solid rgba(252,238,9,0.15)', background: 'rgba(6,6,8,0.92)' }}
+      className="sticky top-0 z-50 h-14 flex items-center px-4 md:px-6 backdrop-blur-md"
+      style={{ borderBottom: `1px solid ${theme.navBorder}`, background: theme.navBg }}
     >
-      {/* Logo */}
+      {/* Logo — left */}
       <div className="flex items-center gap-2 select-none shrink-0 cursor-pointer" onClick={onHome}>
         <BlockIcon />
         <span className="font-bold text-[14px] md:text-[15px] tracking-tight leading-none">
-          <span className="text-white">Block</span>
-          <span style={{ color: '#FCEE09' }}>Blaster</span>
-          {/* Hidden on mobile to save space */}
+          <span style={{ color: theme.text }}>Block</span>
+          <span style={{ color: theme.accent }}>Blaster</span>
           <span
             className="hidden sm:inline font-mono font-normal text-[11px] ml-1.5"
-            style={{ color: 'rgba(252,238,9,0.35)' }}
+            style={{ color: `${theme.accent}55` }}
           >
             AI
           </span>
         </span>
       </div>
 
-      {/* Tab switcher */}
-      <div
-        className="relative flex items-center p-1 rounded-sm"
-        style={{ border: '1px solid rgba(252,238,9,0.18)', background: 'rgba(252,238,9,0.04)' }}
-      >
-        {TABS.map(tab => {
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className="relative z-10 px-3 md:px-4 py-1.5 text-[11px] md:text-[12px] font-bold tracking-[0.12em] transition-colors duration-150 cursor-pointer uppercase"
-              style={{ color: isActive ? '#060608' : 'rgba(252,238,9,0.45)' }}
-            >
-              {tab.label}
-              {isActive && (
-                <motion.div
-                  layoutId="tab-pill"
-                  className="absolute inset-0 rounded-sm"
-                  style={{ background: '#FCEE09', zIndex: -1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 36 }}
-                />
-              )}
-            </button>
-          )
-        })}
+      {/* Tab switcher — centered absolutely */}
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <div
+          className="relative flex items-center p-1 rounded-sm"
+          style={{ border: `1px solid ${theme.accent}2e`, background: `${theme.accent}0a` }}
+        >
+          {TABS.map(tab => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className="relative z-10 px-3 md:px-4 py-1.5 text-[11px] md:text-[12px] font-bold tracking-[0.12em] transition-colors duration-150 cursor-pointer uppercase whitespace-nowrap"
+                style={{ color: isActive ? theme.bg : `${theme.accent}72` }}
+              >
+                {tab.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="tab-pill"
+                    className="absolute inset-0 rounded-sm"
+                    style={{ background: theme.accent, zIndex: -1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+                  />
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Balancing spacer — desktop only so it doesn't cramp mobile */}
-      <div className="hidden md:block" style={{ width: 120 }} />
+      {/* Spacer — keeps logo left-aligned */}
+      <div className="ml-auto" />
     </nav>
   )
 }
+
 
 function BlockIcon() {
   return (

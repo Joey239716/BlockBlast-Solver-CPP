@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useSettings } from '@/context/SettingsContext'
 
 const KATAKANA = 'ァアィイゥウェエォオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'
 const RAIN_CHARS = KATAKANA + '0123456789!@#$%^&*'
@@ -165,6 +166,7 @@ function startGlitch(canvas: HTMLCanvasElement): () => void {
 export function BackgroundCanvas() {
   const rainRef   = useRef<HTMLCanvasElement>(null)
   const glitchRef = useRef<HTMLCanvasElement>(null)
+  const { theme } = useSettings()
 
   useEffect(() => {
     if (!rainRef.current) return
@@ -191,14 +193,16 @@ export function BackgroundCanvas() {
         className="absolute inset-0 w-full h-full"
       />
 
-      {/* Vignette — draws eye to center */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(20, 20, 25, 0.55) 70%, rgba(5, 5, 10, 0.85) 100%)',
-        }}
-      />
+      {/* Vignette — dark themes only */}
+      {theme.isDark && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(20, 20, 25, 0.55) 70%, rgba(5, 5, 10, 0.85) 100%)',
+          }}
+        />
+      )}
     </div>
   )
 }

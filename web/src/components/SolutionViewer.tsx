@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import type { SolverResult } from '@/types/solver'
-import { PIECE_COLOR_VALUES, PIECE_COLORS } from '@/types/solver'
+import { PIECE_COLORS } from '@/types/solver'
 import { PlaybackGrid } from '@/components/PlaybackGrid'
 import { StepControls } from '@/components/StepControls'
 import { useAutoplay } from '@/hooks/useAutoplay'
+import { useSettings, pieceColorHex } from '@/context/SettingsContext'
 
 interface SolutionViewerProps {
   result:    SolverResult
@@ -15,6 +16,7 @@ interface SolutionViewerProps {
 export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
   const [step, setStep] = useState(0)
   const [confettiShown, setConfettiShown] = useState(false)
+  const { effectivePieceColors } = useSettings()
 
   const total    = result.steps.length
   const autoplay = useAutoplay()
@@ -81,7 +83,7 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
 
   const currentStepData = result.steps[step]
   const pieceColor = PIECE_COLORS[currentStepData.pieceIndex]
-  const pieceHex   = PIECE_COLOR_VALUES[pieceColor]
+  const pieceHex   = pieceColorHex(pieceColor, effectivePieceColors)
   const isLast     = step === total - 1
 
   // Step description text

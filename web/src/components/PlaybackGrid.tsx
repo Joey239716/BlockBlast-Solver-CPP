@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import type { PlacementStep, PieceColor } from '@/types/solver'
-import { PIECE_COLOR_VALUES, PIECE_GLOW_VALUES } from '@/types/solver'
+import { useSettings, pieceColorHex } from '@/context/SettingsContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,8 +92,9 @@ export function PlaybackGrid({ stepData, placedColor, stepKey, onDone }: Props) 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [stepKey])
 
-  const hex  = PIECE_COLOR_VALUES[placedColor]
-  const glow = PIECE_GLOW_VALUES[placedColor]
+  const { theme, settings, effectivePieceColors } = useSettings()
+  const hex  = pieceColorHex(placedColor, effectivePieceColors)
+  const glow = `${hex}72`
 
   return (
     <div className="grid grid-cols-8 gap-[3px] w-full max-w-[480px] mx-auto aspect-square select-none">
@@ -174,10 +175,7 @@ export function PlaybackGrid({ stepData, placedColor, stepKey, onDone }: Props) 
               <motion.div
                 key={`${stepKey}-empty-${key}`}
                 className="rounded-[7px] aspect-square w-full"
-                style={{
-                  background: 'rgb(26,27,42)',
-                  border:     '1px solid rgba(255,255,255,0.05)',
-                }}
+                style={{ background: theme.cellEmpty, border: `1px solid ${theme.cellEmptyBorder}` }}
                 initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1,    opacity: 1 }}
                 transition={{ duration: 0.15, delay: 0.02 }}
@@ -190,12 +188,12 @@ export function PlaybackGrid({ stepData, placedColor, stepKey, onDone }: Props) 
               key={key}
               className="rounded-[7px] aspect-square w-full"
               style={isFilled ? {
-                background: isPlaced ? `${hex}b3` : '#5b5bd5',
-                border:     `1px solid ${isPlaced ? hex : 'rgba(100,100,200,0.3)'}`,
+                background: isPlaced ? `${hex}b3` : settings.boardFilledColor,
+                border:     `1px solid ${isPlaced ? hex : `${settings.boardFilledColor}88`}`,
                 boxShadow:  isPlaced ? `0 0 12px ${glow}, inset 0 1px 0 rgba(255,255,255,0.15)` : 'inset 0 1px 0 rgba(255,255,255,0.07)',
               } : {
-                background: 'rgb(26,27,42)',
-                border:     '1px solid rgba(255,255,255,0.05)',
+                background: theme.cellEmpty,
+                border:     `1px solid ${theme.cellEmptyBorder}`,
               }}
             />
           )
