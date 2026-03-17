@@ -24,18 +24,25 @@ export interface Theme {
   boardActiveGlow:   string
   cardBg:            string
   cardBorder:        string
+  surfaceBg:         string
+  boardBorder:       string
+  boardShadow:       string
+  boardFilledDefault: string
 }
 
 export const THEMES: Theme[] = [
   {
     id: 'dark', name: 'Dark',
     bg: '#060608', navBg: 'rgba(6,6,8,0.92)', navBorder: 'rgba(252,238,9,0.15)',
-    boardBg: '#2d1600', cellEmpty: '#1c0e00', cellEmptyBorder: 'rgba(0,0,0,0.5)',
+    boardBg: '#111118', cellEmpty: '#0c0c14', cellEmptyBorder: 'rgba(255,255,255,0.04)',
     cellEmptyShadow: 'inset 0 2px 5px rgba(0,0,0,0.7)',
     text: '#ffffff', textMuted: 'rgba(255,255,255,0.45)',
     accent: '#FCEE09', accent2: '#00F5FF', isDark: true,
     boardActiveBorder: 'rgba(245,192,48,0.35)', boardActiveGlow: 'rgba(245,192,48,0.15)',
     cardBg: 'rgba(255,255,255,0.04)', cardBorder: 'rgba(255,255,255,0.08)',
+    surfaceBg: '#0e0e1a',
+    boardBorder: 'rgba(0,0,0,0.6)', boardShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    boardFilledDefault: '#f5c030',
   },
   {
     id: 'light', name: 'Iris',
@@ -46,6 +53,9 @@ export const THEMES: Theme[] = [
     accent: '#5B5BD5', accent2: '#0891B2', isDark: false,
     boardActiveBorder: 'rgba(91,91,213,0.5)', boardActiveGlow: 'rgba(91,91,213,0.14)',
     cardBg: 'rgba(255,255,255,0.85)', cardBorder: 'rgba(91,91,213,0.14)',
+    surfaceBg: 'rgba(91,91,213,0.07)',
+    boardBorder: 'rgba(91,91,213,0.18)', boardShadow: '0 8px 24px rgba(91,91,213,0.1)',
+    boardFilledDefault: '#5B5BD5',
   },
   {
     id: 'midnight', name: 'Midnight',
@@ -56,6 +66,9 @@ export const THEMES: Theme[] = [
     accent: '#6399ff', accent2: '#00F5FF', isDark: true,
     boardActiveBorder: 'rgba(99,153,255,0.35)', boardActiveGlow: 'rgba(99,153,255,0.12)',
     cardBg: 'rgba(99,153,255,0.04)', cardBorder: 'rgba(99,153,255,0.1)',
+    surfaceBg: '#0c1228',
+    boardBorder: 'rgba(0,0,0,0.6)', boardShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    boardFilledDefault: '#6399ff',
   },
   {
     id: 'forest', name: 'Forest',
@@ -66,6 +79,9 @@ export const THEMES: Theme[] = [
     accent: '#7fff6a', accent2: '#00F5FF', isDark: true,
     boardActiveBorder: 'rgba(127,255,106,0.3)', boardActiveGlow: 'rgba(127,255,106,0.1)',
     cardBg: 'rgba(127,255,106,0.04)', cardBorder: 'rgba(127,255,106,0.1)',
+    surfaceBg: '#0c180a',
+    boardBorder: 'rgba(0,0,0,0.6)', boardShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    boardFilledDefault: '#7fff6a',
   },
 ]
 
@@ -85,16 +101,16 @@ function randomColorSet(): [string, string, string] {
 // ─── Settings type ────────────────────────────────────────────────────────────
 
 export interface AppSettings {
-  themeId:           ThemeId
-  boardFilledColor:  string
-  pieceColors:       [string, string, string]
-  randomPieceColors: boolean
+  themeId:            ThemeId
+  boardFilledColors:  Partial<Record<ThemeId, string>>
+  pieceColors:        [string, string, string]
+  randomPieceColors:  boolean
 }
 
 function defaultSettings(): AppSettings {
   return {
     themeId:           'dark',
-    boardFilledColor:  '#f5c030',
+    boardFilledColors: {},
     pieceColors:       ['#00d4ff', '#9b5cff', '#ff6b6b'],
     randomPieceColors: false,
   }
@@ -114,8 +130,10 @@ interface SettingsCtx {
   settings:             AppSettings
   theme:                Theme
   effectivePieceColors: [string, string, string]
+  effectiveBoardColor:  string
   updateTheme:          (id: ThemeId) => void
   updateBoardColor:     (color: string) => void
+  resetBoardColor:      () => void
   updatePieceColor:     (index: 0 | 1 | 2, color: string) => void
   toggleRandomColors:   () => void
   rerollRandomColors:   () => void
@@ -132,6 +150,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const effectivePieceColors: [string, string, string] =
     settings.randomPieceColors ? randColors : settings.pieceColors
 
+  const effectiveBoardColor: string =
+    settings.boardFilledColors[settings.themeId] ?? theme.boardFilledDefault
+
   // Persist
   useEffect(() => {
     localStorage.setItem('bb-settings', JSON.stringify(settings))
@@ -141,7 +162,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(s => ({ ...s, themeId: id })), [])
 
   const updateBoardColor   = useCallback((color: string) =>
-    setSettings(s => ({ ...s, boardFilledColor: color })), [])
+    setSettings(s => ({ ...s, boardFilledColors: { ...s.boardFilledColors, [s.themeId]: color } })), [])
+
+  const resetBoardColor    = useCallback(() =>
+    setSettings(s => {
+      const next = { ...s.boardFilledColors }
+      delete next[s.themeId]
+      return { ...s, boardFilledColors: next }
+    }), [])
 
   const updatePieceColor   = useCallback((index: 0 | 1 | 2, color: string) =>
     setSettings(s => {
@@ -158,8 +186,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Map PieceColor to hex — exported helper used by Grid / PlaybackGrid
   return (
     <Ctx.Provider value={{
-      settings, theme, effectivePieceColors,
-      updateTheme, updateBoardColor, updatePieceColor,
+      settings, theme, effectivePieceColors, effectiveBoardColor,
+      updateTheme, updateBoardColor, resetBoardColor, updatePieceColor,
       toggleRandomColors, rerollRandomColors,
     }}>
       {children}

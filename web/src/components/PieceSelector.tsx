@@ -60,7 +60,7 @@ export function PieceSelector({
               className={`${vertical ? 'w-full' : 'flex-1'} flex flex-col items-center gap-3 p-4 rounded-xl border cursor-pointer
                          min-h-[100px] relative group`}
               style={{
-                background:  isActive ? `${hex}14` : theme.cardBg,
+                background:  isActive ? `${hex}14` : theme.surfaceBg,
                 borderColor: isActive ? hex : theme.cardBorder,
                 boxShadow:   piece && isActive ? `0 0 20px ${glow}` : 'none',
               }}

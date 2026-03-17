@@ -5,8 +5,8 @@ import { PIECE_COLORS } from '@/types/solver'
 
 export function SettingsPage() {
   const {
-    settings, theme, effectivePieceColors,
-    updateTheme, updateBoardColor, updatePieceColor,
+    settings, theme, effectivePieceColors, effectiveBoardColor,
+    updateTheme, updateBoardColor, resetBoardColor, updatePieceColor,
     toggleRandomColors, rerollRandomColors,
   } = useSettings()
 
@@ -34,7 +34,7 @@ export function SettingsPage() {
           </p>
           <div className="flex items-center gap-4">
             <ColorSwatch
-              color={settings.boardFilledColor}
+              color={effectiveBoardColor}
               onChange={updateBoardColor}
             />
             <div className="flex flex-col gap-0.5">
@@ -42,13 +42,13 @@ export function SettingsPage() {
                 Filled Cell
               </span>
               <span className="text-[11px] font-mono uppercase" style={{ color: theme.textMuted }}>
-                {settings.boardFilledColor}
+                {effectiveBoardColor}
               </span>
             </div>
             <button
               className="ml-auto text-[11px] font-semibold cursor-pointer px-3 py-1.5 rounded-lg transition-colors"
               style={{ color: theme.textMuted, border: `1px solid ${theme.cardBorder}`, background: theme.cardBg }}
-              onClick={() => updateBoardColor('#f5c030')}
+              onClick={resetBoardColor}
             >
               Reset
             </button>
@@ -64,7 +64,7 @@ export function SettingsPage() {
                 key={i}
                 className="w-6 h-6 rounded-[5px]"
                 style={filled ? {
-                  background: settings.boardFilledColor,
+                  background: effectiveBoardColor,
                   boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.35)',
                 } : {
                   background: theme.cellEmpty,

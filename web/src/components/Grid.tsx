@@ -61,7 +61,7 @@ type GridProps = GridSetupProps | GridSolutionProps
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function Grid(props: GridProps) {
-  const { theme, settings, effectivePieceColors } = useSettings()
+  const { theme, effectivePieceColors, effectiveBoardColor } = useSettings()
   const [hoverCell,  setHoverCell]  = useState<{ row: number; col: number } | null>(null)
   const [isHovering, setIsHovering] = useState(false)
 
@@ -93,10 +93,10 @@ export function Grid(props: GridProps) {
         background:   theme.boardBg,
         border:       active
           ? `2px solid ${theme.boardActiveBorder}`
-          : '2px solid rgba(0,0,0,0.6)',
+          : `2px solid ${theme.boardBorder}`,
         boxShadow:    active
           ? `0 0 28px ${theme.boardActiveGlow}`
-          : '0 8px 32px rgba(0,0,0,0.6)',
+          : theme.boardShadow,
         padding:      '6px',
         borderRadius: '14px',
       }}
@@ -123,7 +123,7 @@ export function Grid(props: GridProps) {
             if (isPlaced && props.mode === 'solution') {
               cellStyle = pieceCellStyle(pieceColorHex(props.placedColor, effectivePieceColors))
             } else if (filled) {
-              cellStyle = filledCellStyle(settings.boardFilledColor)
+              cellStyle = filledCellStyle(effectiveBoardColor)
             } else if (isHovered) {
               cellStyle = {
                 background: 'rgba(255,255,255,0.07)',

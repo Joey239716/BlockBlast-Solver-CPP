@@ -89,7 +89,7 @@ export default function App() {
         <LoadingOverlay visible={solver.loading} />
         <Navbar activeTab={tab} onTabChange={switchTab} onHome={() => navigate('/')} />
 
-        <main className="max-w-page md:max-w-[960px] mx-auto px-5 pb-20">
+        <main className="max-w-page md:max-w-[960px] mx-auto px-5 pb-20 md:min-h-[calc(100vh-3.5rem)] md:flex md:flex-col md:justify-center">
             <TabPanel active={tab === 'settings'}>
               <div className="pt-8">
                 <SettingsPage />

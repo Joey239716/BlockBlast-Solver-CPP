@@ -92,7 +92,7 @@ export function PlaybackGrid({ stepData, placedColor, stepKey, onDone }: Props) 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [stepKey])
 
-  const { theme, settings, effectivePieceColors } = useSettings()
+  const { theme, effectivePieceColors, effectiveBoardColor } = useSettings()
   const hex  = pieceColorHex(placedColor, effectivePieceColors)
   const glow = `${hex}72`
 
@@ -188,8 +188,8 @@ export function PlaybackGrid({ stepData, placedColor, stepKey, onDone }: Props) 
               key={key}
               className="rounded-[7px] aspect-square w-full"
               style={isFilled ? {
-                background: isPlaced ? `${hex}b3` : settings.boardFilledColor,
-                border:     `1px solid ${isPlaced ? hex : `${settings.boardFilledColor}88`}`,
+                background: isPlaced ? `${hex}b3` : effectiveBoardColor,
+                border:     `1px solid ${isPlaced ? hex : `${effectiveBoardColor}88`}`,
                 boxShadow:  isPlaced ? `0 0 12px ${glow}, inset 0 1px 0 rgba(255,255,255,0.15)` : 'inset 0 1px 0 rgba(255,255,255,0.07)',
               } : {
                 background: theme.cellEmpty,
