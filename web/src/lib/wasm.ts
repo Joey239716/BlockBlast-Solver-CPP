@@ -30,7 +30,7 @@ export async function initWasm(timeoutMs = 15_000): Promise<void> {
 
   return new Promise((resolve, reject) => {
     function poll() {
-      const win = window as Record<string, unknown>
+      const win = window as unknown as Record<string, unknown>
 
       // MODULARIZE=1 — various possible export names
       for (const name of ['createSolverModule', 'createModule']) {
