@@ -104,7 +104,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           transition={{ delay: 0.45, duration: 0.5 }}
         >
           {/* Speed */}
-          <div className="flex flex-col rounded-2xl" style={{ background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(16px)', padding: 'clamp(10px, 3vw, 14px)' }}>
+          <div className="flex flex-col rounded-2xl" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)', padding: 'clamp(10px, 3vw, 14px)' }}>
             <div className="flex items-center gap-2 mb-1">
               <div className="flex items-center justify-center rounded-lg flex-shrink-0" style={{ width: 'clamp(24px, 6vw, 28px)', height: 'clamp(24px, 6vw, 28px)', background: 'rgba(252,238,9,0.12)', border: '1px solid rgba(252,238,9,0.25)' }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -117,7 +117,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           </div>
 
           {/* Efficiency */}
-          <div className="flex flex-col rounded-2xl" style={{ background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(16px)', padding: 'clamp(10px, 3vw, 14px)' }}>
+          <div className="flex flex-col rounded-2xl" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)', padding: 'clamp(10px, 3vw, 14px)' }}>
             <div className="flex items-end gap-1.5 mb-1">
               <PruningBars />
               <span className="font-black leading-none mb-0.5" style={{ color: '#00F5FF', fontSize: 'clamp(14px, 4.5vw, 18px)' }}>99.4%</span>
@@ -201,7 +201,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           {/* Left stat */}
           <motion.div
             className="flex flex-col rounded-2xl self-center"
-            style={{ background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(16px)', minWidth: 'clamp(120px, 17vw, 155px)', padding: 'clamp(10px, 1.6vw, 14px)' }}
+            style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)', minWidth: 'clamp(120px, 17vw, 155px)', padding: 'clamp(10px, 1.6vw, 14px)' }}
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
           >
@@ -245,7 +245,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           {/* Right stat */}
           <motion.div
             className="flex flex-col rounded-2xl self-center"
-            style={{ background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(16px)', minWidth: 'clamp(120px, 17vw, 155px)', padding: 'clamp(10px, 1.6vw, 14px)' }}
+            style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)', minWidth: 'clamp(120px, 17vw, 155px)', padding: 'clamp(10px, 1.6vw, 14px)' }}
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
@@ -339,7 +339,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
 
             {/* Left cards */}
             <div className="flex flex-col gap-4" style={{ width: 'clamp(140px, 14vw, 195px)', paddingTop: 'clamp(30px, 3.5vw, 48px)' }}>
-              <div style={{ position: 'relative', left: 'clamp(80px, 10.5vw, 150px)', zIndex: 30 }}>
+              <div style={{ position: 'relative', left: 'calc(clamp(80px, 10.5vw, 150px) - 10px)', zIndex: 30 }}>
                 <FloatCard delay={0.75} frosted>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: 'clamp(28px, 2.5vw, 36px)', height: 'clamp(28px, 2.5vw, 36px)', background: 'rgba(252,238,9,0.1)', border: '1px solid rgba(252,238,9,0.2)' }}>
@@ -355,7 +355,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
                 </FloatCard>
               </div>
 
-              <div style={{ marginTop: 'clamp(100px, 11.5vw, 160px)' }}>
+              <div style={{ marginTop: 'clamp(100px, 11.5vw, 160px)', position: 'relative', left: 18 }}>
                 <FloatCard delay={0.85} tail="right" fitContent>
                   <span className="font-mono mb-2" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 'clamp(8px, 0.7vw, 10px)' }}>optimal sequence</span>
                   <MiniBoard />
@@ -412,7 +412,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
                 </div>
               </FloatCard>
 
-              <div style={{ position: 'relative', right: 'clamp(80px, 10vw, 140px)', marginTop: 'clamp(90px, 10vw, 140px)' }}>
+              <div style={{ position: 'relative', right: 'calc(clamp(80px, 10vw, 140px) - 20px)', marginTop: 'clamp(90px, 10vw, 140px)' }}>
                 <FloatCard delay={0.9} frosted>
                   <span className="font-mono mb-2" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 'clamp(8px, 0.7vw, 10px)' }}>search efficiency</span>
                   <div className="flex items-end gap-1.5">
@@ -453,13 +453,13 @@ function FloatCard({ children, delay, transparent, frosted, tail, fitContent }: 
     )
   }
 
-  const innerBg = frosted ? 'rgba(255,255,255,0.22)' : 'rgba(16,16,22,0.82)'
+  const innerBg = frosted ? 'rgba(255,255,255,0.11)' : 'rgba(16,16,22,0.82)'
   const tailColor = innerBg
 
   // Gradient border (#3)
   const borderGradient = frosted
-    ? 'linear-gradient(145deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.06) 55%, rgba(255,255,255,0.25) 100%)'
-    : 'linear-gradient(145deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.03) 55%, rgba(255,255,255,0.14) 100%)'
+    ? 'linear-gradient(145deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0.14) 100%)'
+    : 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 55%, rgba(255,255,255,0.14) 100%)'
 
   return (
     <motion.div
