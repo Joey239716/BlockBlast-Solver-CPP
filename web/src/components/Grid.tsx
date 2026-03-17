@@ -2,22 +2,26 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Point, PieceColor } from '@/types/solver'
 import { PIECE_COLOR_VALUES, PIECE_GLOW_VALUES } from '@/types/solver'
-import { normalizePiece } from '@/lib/pieces'
 
 // ─── Cell styles ──────────────────────────────────────────────────────────────
 
 function emptyCellStyle(): React.CSSProperties {
   return {
-    background: 'rgb(26, 27, 42)',
-    border: '1px solid rgba(255,255,255,0.05)',
+    background: 'rgb(18, 19, 36)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.55)',
   }
 }
 
 function filledCellStyle(): React.CSSProperties {
   return {
-    background: '#5b5bd5',
-    border: '1px solid rgba(100,100,200,0.3)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+    background: 'linear-gradient(155deg, #7272e8 0%, #4646c2 100%)',
+    border: '1px solid rgba(130,130,230,0.55)',
+    boxShadow: [
+      'inset 0 1px 0 rgba(255,255,255,0.28)',
+      'inset 0 -2px 0 rgba(0,0,0,0.38)',
+      '0 2px 5px rgba(0,0,0,0.45)',
+    ].join(', '),
   }
 }
 
@@ -31,12 +35,6 @@ function pieceCellStyle(color: PieceColor, opacity = 1): React.CSSProperties {
   }
 }
 
-function ghostInvalidStyle(): React.CSSProperties {
-  return {
-    background: 'rgba(255,80,80,0.2)',
-    border: '1px solid rgba(255,80,80,0.4)',
-  }
-}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -62,7 +60,8 @@ type GridProps = GridSetupProps | GridSolutionProps
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function Grid(props: GridProps) {
-  const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null)
+  const [hoverCell,   setHoverCell]   = useState<{ row: number; col: number } | null>(null)
+  const [isHovering,  setIsHovering]  = useState(false)
 
   // Paint gesture state (setup mode only)
   const isPainting  = useRef(false)
@@ -74,24 +73,10 @@ export function Grid(props: GridProps) {
     return () => window.removeEventListener('mouseup', stop)
   }, [])
 
-  // Ghost cells (setup mode only)
-  const ghostInfo = useMemo<{ cells: Set<string>; valid: boolean } | null>(() => {
-    if (props.mode !== 'setup') return null
-    if (!hoverCell || !props.activePiece || props.activePiece.length === 0) return null
+  const isSetup = props.mode === 'setup'
 
-    const norm  = normalizePiece(props.activePiece)
-    const cells = new Set<string>()
-    let valid   = true
-
-    for (const pt of norm) {
-      const r = hoverCell.row + pt.y
-      const c = hoverCell.col + pt.x
-      if (r < 0 || r >= 8 || c < 0 || c >= 8 || props.board[r][c]) valid = false
-      if (r >= 0 && r < 8 && c >= 0 && c < 8) cells.add(`${r},${c}`)
-    }
-
-    return { cells, valid }
-  }, [props.mode, hoverCell, props.mode === 'setup' ? props.activePiece : null, props.board])
+  // Single-cell hover highlight (setup mode only — no piece ghost preview)
+  const hoverKey = isSetup && hoverCell ? `${hoverCell.row},${hoverCell.col}` : null
 
   // Placed-cell set (solution mode)
   const placedSet = useMemo<Set<string>>(() => {
@@ -99,21 +84,32 @@ export function Grid(props: GridProps) {
     return new Set(props.placedCells.map(p => `${p.y},${p.x}`))
   }, [props.mode, props.mode === 'solution' ? props.placedCells : null])
 
-  const isSetup = props.mode === 'setup'
+  const active = isSetup && isHovering
 
   return (
     <div
-      className="grid grid-cols-8 gap-[3px] w-full max-w-[480px] mx-auto aspect-square select-none"
-      onMouseLeave={() => setHoverCell(null)}
+      className="mx-auto rounded-[10px] transition-all duration-200"
+      style={{
+        width:      '100%',
+        maxWidth:   'min(480px, calc(100vw - 2.5rem))',
+        border:     active ? '1.5px solid rgba(0,212,255,0.22)' : '1.5px solid rgba(255,255,255,0.05)',
+        boxShadow:  active ? '0 0 28px rgba(0,212,255,0.08), 0 0 0 3px rgba(0,212,255,0.04)' : 'none',
+        padding:    '3px',
+      }}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => { setIsHovering(false); setHoverCell(null) }}
+    >
+    <div
+      className="grid grid-cols-8 gap-[3px] w-full aspect-square select-none"
       onDragStart={e => e.preventDefault()}
       role="grid"
-      aria-label="Block Blast board"
+      aria-label="BlockBlaster AI board"
     >
       {Array.from({ length: 8 }, (_, row) =>
         Array.from({ length: 8 }, (_, col) => {
           const filled     = props.board[row][col]
           const cellKey    = `${row},${col}`
-          const isGhost    = ghostInfo?.cells.has(cellKey) && !filled
+          const isHovered  = cellKey === hoverKey && !filled
           const isPlaced   = placedSet.has(cellKey)
           const placedIdx  = props.mode === 'solution'
             ? props.placedCells.findIndex(p => p.y === row && p.x === col)
@@ -125,10 +121,12 @@ export function Grid(props: GridProps) {
             cellStyle = pieceCellStyle(props.placedColor)
           } else if (filled) {
             cellStyle = filledCellStyle()
-          } else if (isGhost && ghostInfo && isSetup && props.activePieceColor) {
-            cellStyle = ghostInfo.valid
-              ? { ...pieceCellStyle(props.activePieceColor, 0.4), boxShadow: 'none' }
-              : ghostInvalidStyle()
+          } else if (isHovered) {
+            cellStyle = {
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+            }
           } else {
             cellStyle = emptyCellStyle()
           }
@@ -155,12 +153,13 @@ export function Grid(props: GridProps) {
           }
 
           return (
-            <button
+            <motion.button
               key={cellKey}
               role="gridcell"
-              className={`rounded-[7px] aspect-square w-full transition-all duration-[120ms]
-                ${isSetup ? 'cursor-pointer active:scale-[0.88]' : 'cursor-default'}`}
+              className={`rounded-[7px] aspect-square w-full ${isSetup ? 'cursor-pointer' : 'cursor-default'}`}
               style={cellStyle}
+              whileTap={isSetup ? { scale: 1.06 } : {}}
+              transition={{ type: 'spring', stiffness: 500, damping: 15, duration: 0.12 }}
               onMouseDown={isSetup ? () => {
                 const p = props as GridSetupProps
                 paintValue.current = !filled
@@ -183,6 +182,7 @@ export function Grid(props: GridProps) {
           )
         }),
       )}
+    </div>
     </div>
   )
 }

@@ -11,12 +11,13 @@ interface PieceSelectorProps {
   activePieceIdx: number | null
   onPieceChange:  (idx: number, points: Point[] | null) => void
   onActiveChange: (idx: number | null) => void
+  vertical?:      boolean
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PieceSelector({
-  pieces, activePieceIdx, onPieceChange, onActiveChange,
+  pieces, activePieceIdx, onPieceChange, onActiveChange, vertical = false,
 }: PieceSelectorProps) {
   const [pickerOpenFor, setPickerOpenFor] = useState<number | null>(null)
 
@@ -43,7 +44,7 @@ export function PieceSelector({
 
   return (
     <>
-      <div className="flex gap-3">
+      <div className={`flex ${vertical ? 'flex-col' : ''} gap-3`}>
         {([0, 1, 2] as const).map(idx => {
           const piece    = pieces[idx]
           const color    = PIECE_COLORS[idx]
@@ -54,8 +55,8 @@ export function PieceSelector({
           return (
             <motion.button
               key={idx}
-              className="flex-1 flex flex-col items-center gap-3 p-4 rounded-xl border cursor-pointer
-                         min-h-[100px] relative group"
+              className={`${vertical ? 'w-full' : 'flex-1'} flex flex-col items-center gap-3 p-4 rounded-xl border cursor-pointer
+                         min-h-[100px] relative group`}
               style={{
                 background:  piece ? (isActive ? `${hex}10` : '#0f0f1e') : '#0f0f1e',
                 borderColor: piece ? (isActive ? hex : 'rgba(255,255,255,0.07)') : 'rgba(255,255,255,0.07)',
@@ -73,29 +74,23 @@ export function PieceSelector({
                 Piece {idx + 1}
               </span>
 
-              {/* Preview or empty slot */}
+              {/* Preview or ghost cycler */}
               {piece ? (
                 <PieceMiniPreview points={piece} color={color} />
               ) : (
-                <div
-                  className="w-9 h-9 rounded-lg border-[1.5px] border-dashed flex items-center justify-center
-                             transition-colors duration-150 group-hover:border-white/20"
-                  style={{ borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.2)' }}
-                >
-                  <PlusIcon />
-                </div>
+                <GhostCycler slotIdx={idx} color={color} />
               )}
 
               {/* Status label */}
-              <span className="text-[10px] text-white/20">
-                {piece ? 'Tap to change' : 'Tap to select'}
+              <span className="text-[11px] font-medium text-white">
+                {piece ? 'Tap to change' : 'Tap to add'}
               </span>
 
               {/* Clear button */}
               {piece && (
                 <button
                   className="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/[0.06]
-                             flex items-center justify-center text-white/30
+                             flex items-center justify-center text-white/55
                              hover:bg-red-500/20 hover:text-red-400 transition-colors duration-120 cursor-pointer"
                   onClick={e => clearPiece(idx, e)}
                   aria-label="Clear piece"
@@ -125,6 +120,70 @@ export function PieceSelector({
   )
 }
 
+// ─── Ghost piece cycler (empty slots) ────────────────────────────────────────
+
+const GHOST_SEQUENCE = ['5x1', 'L1', 'T2', '3x3', '2x2', 'Z1', 'L5', 'T4', '1x4', 'L13', 'Z3', 'S1']
+const SLOT_START     = [0, 4, 8] // each slot starts at a different piece
+const CYCLE_MS       = 3800
+
+function GhostCycler({ slotIdx, color }: { slotIdx: number; color: PieceColor }) {
+  const [seqIdx, setSeqIdx] = useState(SLOT_START[slotIdx] % GHOST_SEQUENCE.length)
+
+  useEffect(() => {
+    // Stagger start time so slots don't cycle in sync
+    const delay = setTimeout(() => {
+      const t = setInterval(() => setSeqIdx(i => (i + 1) % GHOST_SEQUENCE.length), CYCLE_MS)
+      return () => clearInterval(t)
+    }, slotIdx * 700)
+    return () => clearTimeout(delay)
+  }, [slotIdx])
+
+  const pieceId = GHOST_SEQUENCE[seqIdx]
+  const points  = PIECES[pieceId]
+  if (!points) return null
+
+  const norm   = normalizePiece(points)
+  const { w, h } = pieceBounds(norm)
+  const filled = new Set(norm.map(p => `${p.x},${p.y}`))
+  const hex    = PIECE_COLOR_VALUES[color]
+  const glow   = PIECE_GLOW_VALUES[color]
+
+  return (
+    <div className="flex items-center justify-center" style={{ width: 56, height: 56 }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={pieceId}
+          className="inline-grid"
+          style={{ gridTemplateColumns: `repeat(${w}, 10px)`, gap: '2px' }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.35, ease: 'easeInOut' }}
+        >
+          {Array.from({ length: h }, (_, r) =>
+            Array.from({ length: w }, (_, c) => {
+              const on = filled.has(`${c},${r}`)
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  className="rounded-[2.5px]"
+                  style={{
+                    width:      10,
+                    height:     10,
+                    background: on ? `${hex}0d` : 'transparent',
+                    border:     `1px solid ${on ? `${hex}18` : 'transparent'}`,
+                    boxShadow:  on ? `0 0 4px ${glow}18` : 'none',
+                  }}
+                />
+              )
+            })
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
+
 // ─── Mini piece preview ───────────────────────────────────────────────────────
 
 function PieceMiniPreview({ points, color }: { points: Point[]; color: PieceColor }) {
@@ -135,23 +194,25 @@ function PieceMiniPreview({ points, color }: { points: Point[]; color: PieceColo
   const glow   = PIECE_GLOW_VALUES[color]
 
   return (
-    <div
-      className="inline-grid"
-      style={{ gridTemplateColumns: `repeat(${w}, 10px)`, gap: '2px' }}
-    >
-      {Array.from({ length: h }, (_, r) =>
-        Array.from({ length: w }, (_, c) => (
-          <div
-            key={`${r}-${c}`}
-            className="rounded-[2.5px]"
-            style={{
-              width: 10, height: 10,
-              background: filled.has(`${c},${r}`) ? hex : 'rgba(255,255,255,0.04)',
-              boxShadow:  filled.has(`${c},${r}`) ? `0 0 4px ${glow}` : 'none',
-            }}
-          />
-        )),
-      )}
+    <div className="flex items-center justify-center" style={{ width: 56, height: 56 }}>
+      <div
+        className="inline-grid"
+        style={{ gridTemplateColumns: `repeat(${w}, 10px)`, gap: '2px' }}
+      >
+        {Array.from({ length: h }, (_, r) =>
+          Array.from({ length: w }, (_, c) => (
+            <div
+              key={`${r}-${c}`}
+              className="rounded-[2.5px]"
+              style={{
+                width: 10, height: 10,
+                background: filled.has(`${c},${r}`) ? hex : 'rgba(255,255,255,0.04)',
+                boxShadow:  filled.has(`${c},${r}`) ? `0 0 4px ${glow}` : 'none',
+              }}
+            />
+          )),
+        )}
+      </div>
     </div>
   )
 }
@@ -191,7 +252,7 @@ function PiecePickerModal({
       onClick={onClose}
     >
       <motion.div
-        className="w-full max-w-[600px] max-h-[75vh] flex flex-col rounded-t-2xl border-t border-x border-white/10"
+        className="w-full max-w-[600px] max-h-[92vh] flex flex-col rounded-t-2xl border-t border-x border-white/10"
         style={{ background: '#14142a' }}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
@@ -226,7 +287,7 @@ function PiecePickerModal({
           <div className="px-5 py-4 space-y-5">
             {/* Custom piece editor */}
             <div>
-              <p className="text-[10px] font-semibold tracking-widest uppercase text-white/25 mb-3">
+              <p className="text-[10px] font-semibold tracking-widest uppercase text-white/55 mb-3">
                 Draw Custom
               </p>
               <CustomPieceEditor
@@ -241,7 +302,7 @@ function PiecePickerModal({
             {/* Preset library */}
             {PIECE_GROUPS.map(group => (
               <div key={group.name}>
-                <p className="text-[10px] font-semibold tracking-widest uppercase text-white/25 mb-3">
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-white/55 mb-3">
                   {group.name}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -341,7 +402,7 @@ function CustomPieceEditor({
   return (
     <div className="flex flex-col items-center gap-5 px-5 py-5">
       {/* Instruction */}
-      <p className="text-[11px] text-white/30 tracking-wide">
+      <p className="text-[11px] text-white/55 tracking-wide">
         Click or drag to draw your piece shape
       </p>
 
@@ -378,7 +439,7 @@ function CustomPieceEditor({
       <div className="flex items-center gap-3 min-h-[24px]">
         {hasAny && (
           <>
-            <span className="text-[10px] text-white/25 tracking-widest uppercase">Preview</span>
+            <span className="text-[10px] text-white/50 tracking-widest uppercase">Preview</span>
             <PieceMiniPreview points={normalized} color={color} />
           </>
         )}
@@ -388,7 +449,7 @@ function CustomPieceEditor({
       <div className="flex gap-3 w-full">
         <button
           className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-[12px] font-medium
-                     text-white/35 hover:text-white/65 hover:bg-white/[0.04]
+                     text-white/60 hover:text-white/85 hover:bg-white/[0.04]
                      transition-colors duration-150 cursor-pointer"
           onClick={handleClear}
         >
@@ -465,13 +526,6 @@ function PieceThumb({ id, selected, accentHex, onSelect }: PieceThumbProps) {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-function PlusIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 function CloseIcon() {
   return (

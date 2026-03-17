@@ -14,57 +14,67 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   return (
-    <nav className="sticky top-0 z-50 h-14 flex items-center justify-between px-6 border-b border-white/[0.06] bg-[#080810]/90 backdrop-blur-md">
+    <nav
+      className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 md:px-6 backdrop-blur-md"
+      style={{ borderBottom: '1px solid rgba(252,238,9,0.15)', background: 'rgba(6,6,8,0.92)' }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 select-none">
+      <div className="flex items-center gap-2 select-none shrink-0">
         <BlockIcon />
-        <span className="font-russo text-[15px] tracking-tight text-white leading-none">
-          Block<span style={{ background: 'linear-gradient(90deg,#00d4ff,#9b5cff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Blast</span>
-          <span className="text-white/40 text-[11px] font-sans font-medium ml-1.5">Solver</span>
+        <span className="font-bold text-[14px] md:text-[15px] tracking-tight leading-none">
+          <span className="text-white">Block</span>
+          <span style={{ color: '#FCEE09' }}>Blaster</span>
+          {/* Hidden on mobile to save space */}
+          <span
+            className="hidden sm:inline font-mono font-normal text-[11px] ml-1.5"
+            style={{ color: 'rgba(252,238,9,0.35)' }}
+          >
+            //AI
+          </span>
         </span>
       </div>
 
       {/* Tab switcher */}
-      <div className="relative flex items-center bg-bg-surface border border-white/[0.07] rounded-full p-1">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`relative z-10 px-4 py-1.5 rounded-full text-[12px] font-semibold tracking-wide transition-colors duration-150 cursor-pointer uppercase
-              ${activeTab === tab.id ? 'text-white' : 'text-white/35 hover:text-white/60'}`}
-          >
-            {tab.label}
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="tab-pill"
-                className="absolute inset-0 rounded-full bg-bg-elevated border border-white/[0.1]"
-                style={{ zIndex: -1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 36 }}
-              />
-            )}
-          </button>
-        ))}
+      <div
+        className="relative flex items-center p-1 rounded-sm"
+        style={{ border: '1px solid rgba(252,238,9,0.18)', background: 'rgba(252,238,9,0.04)' }}
+      >
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className="relative z-10 px-3 md:px-4 py-1.5 text-[11px] md:text-[12px] font-bold tracking-[0.12em] transition-colors duration-150 cursor-pointer uppercase"
+              style={{ color: isActive ? '#060608' : 'rgba(252,238,9,0.45)' }}
+            >
+              {tab.label}
+              {isActive && (
+                <motion.div
+                  layoutId="tab-pill"
+                  className="absolute inset-0 rounded-sm"
+                  style={{ background: '#FCEE09', zIndex: -1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+                />
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Spacer to balance logo */}
-      <div className="w-[160px]" />
+      {/* Balancing spacer — desktop only so it doesn't cramp mobile */}
+      <div className="hidden md:block" style={{ width: 120 }} />
     </nav>
   )
 }
 
 function BlockIcon() {
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="blk-lg" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#00d4ff" />
-          <stop offset="1" stopColor="#9b5cff" />
-        </linearGradient>
-      </defs>
-      <rect x="1"  y="1"  width="10" height="10" rx="3" fill="url(#blk-lg)" />
-      <rect x="15" y="1"  width="10" height="10" rx="3" fill="url(#blk-lg)" opacity="0.65" />
-      <rect x="1"  y="15" width="10" height="10" rx="3" fill="url(#blk-lg)" opacity="0.45" />
-      <rect x="15" y="15" width="10" height="10" rx="3" fill="url(#blk-lg)" opacity="0.28" />
+    <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <rect x="1"  y="1"  width="10" height="10" rx="2.5" fill="#FCEE09" />
+      <rect x="15" y="1"  width="10" height="10" rx="2.5" fill="#FCEE09" opacity="0.6" />
+      <rect x="1"  y="15" width="10" height="10" rx="2.5" fill="#00F5FF" opacity="0.5" />
+      <rect x="15" y="15" width="10" height="10" rx="2.5" fill="#00F5FF" opacity="0.3" />
     </svg>
   )
 }

@@ -42,7 +42,7 @@ function startRain(canvas: HTMLCanvasElement): () => void {
     const fontSize = mobile ? 10 : 13
 
     // Fade existing content toward bg color
-    ctx.fillStyle = 'rgba(8, 8, 16, 0.055)'
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.06)'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     ctx.font = `${fontSize}px monospace`
@@ -54,7 +54,7 @@ function startRain(canvas: HTMLCanvasElement): () => void {
 
       if (y > 0 && y < canvas.height + fontSize) {
         // Bright white-cyan tip — this frame's character is always the "head"
-        ctx.fillStyle = 'rgba(190, 245, 255, 0.92)'
+        ctx.fillStyle = 'rgba(252, 238, 9, 0.9)'
         ctx.fillText(char, x, y)
       }
 
@@ -115,7 +115,7 @@ function startGlitch(canvas: HTMLCanvasElement): () => void {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.font      = `${fontSize}px monospace`
-    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    ctx.fillStyle = `rgba(252, 238, 9, ${opacity})`;
 
     const charW = ctx.measureText('0').width
     const charH = fontSize * 1.4
@@ -179,12 +179,11 @@ export function BackgroundCanvas() {
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
       {/* Layer 1 — Matrix rain */}
-      {/*
       <canvas
         ref={rainRef}
         className="absolute inset-0 w-full h-full"
-        style={{ opacity: 0.15 }}
-      />*/}
+        style={{ opacity: 0.07 }}
+      />
 
       {/* Layer 2 — ASCII glitch grid */}
       <canvas

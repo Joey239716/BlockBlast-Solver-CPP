@@ -49,15 +49,18 @@ function detectBoardCells(
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useBoardDetection(onBoardLoaded: (board: boolean[][]) => void) {
+export function useBoardDetection(
+  onBoardLoaded: (board: boolean[][]) => void,
+  onStatusChange: (status: string) => void,
+) {
   const { cv, ready, progress } = useOpenCV()
-  const [status,     setStatus]     = useState('')
   const [processing, setProcessing] = useState(false)
+  const setStatus = onStatusChange
 
   const detect = useCallback(async (file: File) => {
     if (!ready || !cv) return
     setProcessing(true)
-    setStatus('Processing…')
+    onStatusChange('Processing…')
 
     try {
       const bitmap = await createImageBitmap(file)
@@ -131,7 +134,7 @@ export function useBoardDetection(onBoardLoaded: (board: boolean[][]) => void) {
     } finally {
       setProcessing(false)
     }
-  }, [cv, ready, onBoardLoaded])
+  }, [cv, ready, onBoardLoaded, onStatusChange])
 
-  return { ready, progress, status, processing, detect }
+  return { ready, progress, processing, detect }
 }

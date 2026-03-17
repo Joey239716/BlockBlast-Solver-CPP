@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 interface StepControlsProps {
   step:     number  // 0-based
   total:    number
-  autoplay: { isPlaying: boolean; toggle: () => void }
+  autoplay: { playing: boolean; toggle: () => void }
   onPrev:   () => void
   onNext:   () => void
 }
@@ -29,20 +29,20 @@ export function StepControls({
         className="flex flex-col items-center gap-1.5 px-5 py-2.5 rounded-xl border cursor-pointer
                    transition-colors duration-150 min-w-[80px]"
         style={{
-          background: autoplay.isPlaying ? 'rgba(57,255,136,0.08)'   : '#0f0f1e',
-          borderColor: autoplay.isPlaying ? '#39ff88'                  : 'rgba(255,255,255,0.07)',
-          boxShadow:  autoplay.isPlaying ? '0 0 14px rgba(57,255,136,0.3)' : 'none',
-          color:      autoplay.isPlaying ? '#39ff88'                  : 'rgba(255,255,255,0.45)',
+          background: autoplay.playing ? 'rgba(57,255,136,0.08)'   : '#0f0f1e',
+          borderColor: autoplay.playing ? '#39ff88'                  : 'rgba(255,255,255,0.07)',
+          boxShadow:  autoplay.playing ? '0 0 14px rgba(57,255,136,0.3)' : 'none',
+          color:      autoplay.playing ? '#39ff88'                  : 'rgba(255,255,255,0.45)',
         }}
         onClick={autoplay.toggle}
-        disabled={isLast && !autoplay.isPlaying}
+        disabled={isLast && !autoplay.playing}
         whileTap={{ scale: 0.95 }}
       >
         <span className="leading-none flex items-center justify-center">
-          {autoplay.isPlaying ? <PauseIcon /> : <PlayIcon />}
+          {autoplay.playing ? <PauseIcon /> : <PlayIcon />}
         </span>
-        <span className="text-[10px] font-medium tracking-widest uppercase">
-          {autoplay.isPlaying ? 'Pause' : 'Play'}
+        <span className="text-[11px] font-semibold">
+          {autoplay.playing ? 'Pause' : 'Play'}
         </span>
       </motion.button>
 
@@ -84,7 +84,7 @@ function CtrlButton({ label, icon, onClick, disabled }: CtrlButtonProps) {
       transition={{ duration: 0.12 }}
     >
       <span className="text-lg leading-none">{icon}</span>
-      <span className="text-[10px] font-medium tracking-widest uppercase">{label}</span>
+      <span className="text-[11px] font-medium text-inherit">{label}</span>
     </motion.button>
   )
 }

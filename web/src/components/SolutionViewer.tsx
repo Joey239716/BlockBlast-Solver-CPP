@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import type { SolverResult } from '@/types/solver'
 import { PIECE_COLOR_VALUES, PIECE_COLORS } from '@/types/solver'
-import { Grid } from '@/components/Grid'
+import { PlaybackGrid } from '@/components/PlaybackGrid'
 import { StepControls } from '@/components/StepControls'
 import { useAutoplay } from '@/hooks/useAutoplay'
 
@@ -16,7 +16,8 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
   const [step, setStep] = useState(0)
   const [confettiShown, setConfettiShown] = useState(false)
 
-  const total = result.steps.length
+  const total    = result.steps.length
+  const autoplay = useAutoplay()
 
   const advance = useCallback(() => {
     setStep(s => {
@@ -24,9 +25,7 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
       autoplay.stop()
       return s
     })
-  }, [total])
-
-  const autoplay = useAutoplay(advance, 1500)
+  }, [total, autoplay.stop])
 
   // Confetti on last step
   useEffect(() => {
@@ -64,8 +63,8 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
             <circle cx="14" cy="20.5" r="1" fill="#ff6b6b"/>
           </svg>
         </div>
-        <p className="text-[18px] font-russo tracking-wide text-white/80">No Solution Found</p>
-        <p className="text-[14px] text-white/35 text-center max-w-[280px]">
+        <p className="text-[18px] font-bold text-white">No Solution Found</p>
+        <p className="text-[13px] font-normal text-white/40 text-center max-w-[260px]">
           The pieces can't be placed on this board. Try adjusting your setup.
         </p>
         <button
@@ -100,26 +99,21 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
       {/* Step pill */}
       <div className="flex justify-center">
         <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full border text-[12px] font-medium"
-          style={{ background: '#0f0f1e', borderColor: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)' }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full border"
+          style={{ background: '#0f0f1e', borderColor: 'rgba(255,255,255,0.07)' }}
         >
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: pieceHex, boxShadow: `0 0 6px ${pieceHex}` }}
-          />
-          <span className="text-white font-semibold">{step + 1}</span>
-          <span>of</span>
-          <span>{total}</span>
+          <div className="w-2 h-2 rounded-full" style={{ background: pieceHex }} />
+          <span className="text-[15px] font-bold text-white">{step + 1}</span>
+          <span className="text-[12px] text-white/55 font-normal">of {total}</span>
         </div>
       </div>
 
-      {/* Grid */}
-      <Grid
-        mode="solution"
-        board={currentStepData.boardBefore}
-        placedCells={currentStepData.placements}
+      {/* Animated playback grid */}
+      <PlaybackGrid
+        stepData={currentStepData}
         placedColor={pieceColor}
         stepKey={step}
+        onDone={() => { if (autoplay.playing) advance() }}
       />
 
       {/* Controls */}
@@ -132,53 +126,36 @@ export function SolutionViewer({ result, onReset }: SolutionViewerProps) {
       />
 
       {/* Step description */}
-      <p
-        className="text-center text-[12px] px-4 py-3 rounded-lg border font-mono"
-        style={{
-          background: '#0f0f1e',
-          borderColor: 'rgba(255,255,255,0.06)',
-          color: 'rgba(255,255,255,0.35)',
-        }}
+      <div
+        className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-[13px]"
+        style={{ background: '#0f0f1e', borderColor: 'rgba(255,255,255,0.06)' }}
       >
-        Place{' '}
-        <span style={{ color: pieceHex, fontWeight: 600 }}>
-          {colorNames[pieceColor]} piece
-        </span>
-        {' — '}top-left corner at row {minY + 1}, col {minX + 1}
-      </p>
+        <span className="text-white/40 font-normal">Place</span>
+        <span className="font-semibold" style={{ color: pieceHex }}>{colorNames[pieceColor]} piece</span>
+        <span className="text-white/40">·</span>
+        <span className="text-white/40 font-normal">row <span className="text-white/70 font-semibold font-mono">{minY + 1}</span>, col <span className="text-white/70 font-semibold font-mono">{minX + 1}</span></span>
+      </div>
 
       {/* Solved banner */}
       {isLast && (
         <motion.div
-          className="flex flex-col items-center gap-1.5 p-5 rounded-xl border text-center"
-          style={{
-            background: 'linear-gradient(135deg, rgba(57,255,136,0.07), rgba(0,212,255,0.07))',
-            borderColor: 'rgba(57,255,136,0.22)',
-          }}
+          className="flex flex-col items-center gap-1 p-5 rounded-xl border text-center"
+          style={{ background: 'rgba(0,212,255,0.04)', borderColor: 'rgba(0,212,255,0.15)' }}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, type: 'spring', stiffness: 400, damping: 30 }}
         >
-          <p
-            className="text-[26px] font-russo tracking-wider"
-            style={{
-              background: 'linear-gradient(135deg, #39ff88, #00d4ff)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Solved!
-          </p>
-          <p className="text-[13px] text-white/35">
-            All {total} piece{total !== 1 ? 's' : ''} placed optimally.
+          <p className="text-[22px] font-bold text-white tracking-tight">Board Solved</p>
+          <p className="text-[13px] text-white/40 font-normal">
+            {total} piece{total !== 1 ? 's' : ''} placed optimally
           </p>
         </motion.div>
       )}
 
       {/* Reset button */}
       <button
-        className="mx-auto px-5 py-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03]
-                   text-[13px] text-white/40 hover:text-white/70 hover:bg-white/[0.06]
+        className="mx-auto px-5 py-2.5 rounded-xl border border-white/[0.08] bg-transparent
+                   text-[13px] font-medium text-white/55 hover:text-white/80 hover:border-white/[0.2]
                    transition-colors duration-150 cursor-pointer"
         onClick={onReset}
       >
