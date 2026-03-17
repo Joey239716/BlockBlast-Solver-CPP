@@ -29,7 +29,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
             className="hidden sm:inline font-mono font-normal text-[11px] ml-1.5"
             style={{ color: 'rgba(252,238,9,0.35)' }}
           >
-            //AI
+            AI
           </span>
         </span>
       </div>

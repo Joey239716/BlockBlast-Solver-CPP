@@ -45,30 +45,6 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
       <div className="relative z-10 flex flex-col items-center text-center px-6 gap-8 max-w-[540px]">
 
         {/* Status badge */}
-        <motion.div
-          className="flex items-center gap-2.5 px-4 py-1.5"
-          style={{
-            border:     '1px solid rgba(252,238,9,0.3)',
-            background: 'rgba(252,238,9,0.06)',
-            borderRadius: '2px',
-          }}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-        >
-          <motion.span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: '#FCEE09' }}
-            animate={{ opacity: [1, 0.25, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <span className="text-[10px] font-mono tracking-[0.28em] uppercase" style={{ color: 'rgba(252,238,9,0.75)' }}>
-            SYSTEM_ONLINE
-          </span>
-          <span className="text-[10px] font-mono" style={{ color: 'rgba(252,238,9,0.3)' }}>——</span>
-          <span className="text-[10px] font-mono tracking-[0.2em]" style={{ color: 'rgba(252,238,9,0.4)' }}>v1.0</span>
-        </motion.div>
-
         {/* Title */}
         <motion.div
           className="flex flex-col items-center select-none"
@@ -80,13 +56,13 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
             className="font-black text-white leading-[0.92] tracking-tighter"
             style={{ fontSize: 'clamp(52px, 14vw, 80px)' }}
           >
-            BLOCK<span style={{ color: 'rgba(255,255,255,0.2)' }}>//</span>BLASTER
+            BLOCKBLASTER
           </h1>
           <div
             className="font-black font-mono leading-[0.92] tracking-tighter"
             style={{ fontSize: 'clamp(52px, 14vw, 80px)', color: '#FCEE09' }}
           >
-            _AI
+            AI
           </div>
         </motion.div>
 
@@ -113,7 +89,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.4 }}
         >
-          {['8×8 GRID', '3 PIECES', 'WASM ENGINE', 'INSTANT SOLVE'].map(label => (
+          {['8×8 GRID', '3 PIECES', 'INSTANT SOLVE'].map(label => (
             <StatChip key={label} label={label} />
           ))}
         </motion.div>
@@ -152,7 +128,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
             transition={{ duration: 0.1 }}
           >
             <span style={{ fontSize: 11 }}>▶</span>
-            ENGAGE SOLVER
+            SOLVE MANUALLY
           </motion.button>
 
           {/* Secondary */}
@@ -170,7 +146,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
             transition={{ duration: 0.1 }}
           >
             <span style={{ fontSize: 11 }}>⊞</span>
-            SCAN SCREENSHOT
+            UPLOAD SCREENSHOT
           </motion.button>
         </motion.div>
 
@@ -182,7 +158,7 @@ export function LandingScreen({ onSolveManually, onUploadScreenshot }: LandingSc
           animate={{ opacity: 1 }}
           transition={{ delay: 1.35, duration: 0.5 }}
         >
-          NIGHT CITY // WASM ENGINE // REACT
+          SOLVE NOW
         </motion.p>
       </div>
     </motion.div>

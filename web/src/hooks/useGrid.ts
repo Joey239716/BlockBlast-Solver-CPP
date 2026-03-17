@@ -62,7 +62,7 @@ export function useGrid(): UseGridReturn {
     push({ board: newBoard.map(r => [...r]), pieces })
   }, [pieces, push])
 
-  const setPiece = useCallback((idx: number, points: Point[] | null) => {
+const setPiece = useCallback((idx: number, points: Point[] | null) => {
     const next = [...pieces]
     next[idx]  = points
     push({ board, pieces: next })
