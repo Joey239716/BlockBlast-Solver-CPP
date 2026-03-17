@@ -3,18 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlockBlaster AI</title>
-    <meta name="description" content="BlockBlaster AI — instant optimal move solver for Block Blast. Runs entirely in your browser with WebAssembly." />
-    <meta property="og:title" content="BlockBlaster AI" />
-    <meta property="og:description" content="Solve any Block Blast board instantly. No account, no backend — pure WASM." />
+
+    <!-- Primary SEO -->
+    <title>BlockBlaster AI — Block Blast Solver</title>
+    <meta name="description" content="Free AI-powered Block Blast solver. Instantly find the optimal move for any board. Upload a screenshot or enter your board manually. No login required — runs 100% in your browser." />
+    <meta name="keywords" content="block blast solver, block blast cheat, block blast helper, block blast optimal moves, block blast AI, block puzzle solver" />
+    <meta name="author" content="BlockBlaster AI" />
+    <link rel="canonical" href="https://blockblasterai.vercel.app/" />
+
+    <!-- Open Graph (social + AI crawlers) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://blockblasterai.vercel.app/" />
+    <meta property="og:title" content="BlockBlaster AI — Block Blast Solver" />
+    <meta property="og:description" content="Free AI-powered Block Blast solver. Instantly find the optimal move for any board. Upload a screenshot or enter your board manually. No login required." />
+    <meta property="og:site_name" content="BlockBlaster AI" />
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="BlockBlaster AI — Block Blast Solver" />
+    <meta name="twitter:description" content="Free AI-powered Block Blast solver. Instantly find the optimal move for any board. No login required." />
+
+    <!-- Indexing -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- Structured data for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "BlockBlaster AI",
+      "url": "https://blockblasterai.vercel.app/",
+      "description": "Free AI-powered Block Blast solver. Instantly find the optimal move for any board. Upload a screenshot or enter your board manually.",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <!-- Emscripten WASM glue — defines window.createSolverModule (or window.Module) -->
-    <!-- If you used build-wasm.sh, this file is web/public/index.js              -->
     <script src="/index.js" onerror="window.__wasmLoadError=true"></script>
   </head>
   <body>
