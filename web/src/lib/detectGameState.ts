@@ -539,39 +539,122 @@ export function computeTrayThreshold(
   return bgBright + (fgBright - bgBright) * 0.35
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function detectTrayPieces(
+  cv: any, src: any,
   data: Uint8Array, imgW: number, imgH: number,
-  boardRect: Rect, calibration: BoardCalibration,
+  boardRect: Rect,
 ): (Point[] | null)[] {
-  const cellSize = boardRect.width / 8
-  const trayY0   = boardRect.y + boardRect.height
-  const trayThr  = computeTrayThreshold(data, imgW, imgH, trayY0)
+  const cellSize   = boardRect.width / 8
+  const TRAY_SCALE = 0.95                      // tray assets are slightly smaller than board cells
+  const cs         = cellSize * TRAY_SCALE
+  const trayY0     = boardRect.y + boardRect.height
+  const trayH      = imgH - trayY0
+  if (trayH <= 0) return [null, null, null]
 
-  console.log('[pieces] boardRect', boardRect)
-  console.log('[pieces] imgW×imgH', imgW, imgH)
-  console.log('[pieces] trayY0', trayY0, '→ imgH', imgH, '  tray height px', imgH - trayY0)
-  console.log('[pieces] cellSize', cellSize.toFixed(1), '  trayThreshold', trayThr.toFixed(1),
-    '  (board rawBrightnessThr was', calibration.rawBrightnessThreshold.toFixed(1) + ')')
+  // Allocate all Mats up front — never delete src (caller owns it)
+  const trayROI   = new cv.Mat()
+  const rgb       = new cv.Mat()
+  const hsv       = new cv.Mat()
+  const mask      = new cv.Mat()
+  const cleaned   = new cv.Mat()
+  const lowTarget = new cv.Mat()
+  const highTarget = new cv.Mat()
+  const contours  = new cv.MatVector()
+  const hierarchy = new cv.Mat()
 
-  return [0, 1, 2].map(slot => {
-    const x0 = Math.round(slot       * imgW / 3)
-    const x1 = Math.round((slot + 1) * imgW / 3)
+  try {
+    // 1. Crop to the full tray region
+    src.roi(new cv.Rect(0, trayY0, imgW, trayH)).copyTo(trayROI)
 
-    const blobs = findBlobs(data, imgW, imgH, x0, trayY0, x1, imgH, trayThr)
-    console.log(`[pieces] slot ${slot}  x0=${x0} x1=${x1}  blobs=${blobs.length}  blobSizes=${blobs.map(b => b.length).join(',')}`)
+    // 2. Convert RGBA → RGB → HSV
+    cv.cvtColor(trayROI, rgb, cv.COLOR_RGBA2RGB)
+    cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV)
 
-    if (!blobs.length) return null
+    // 3. Dynamic background targeting — mean of the tray ≈ background colour
+    const bgMean = cv.mean(hsv)
+    const hTol = 15, sTol = 30, vTol = 40
+    lowTarget.create(hsv.rows, hsv.cols, cv.CV_8UC3)
+    lowTarget.setTo(new cv.Scalar(
+      Math.max(0,   bgMean[0] - hTol),
+      Math.max(0,   bgMean[1] - sTol),
+      Math.max(0,   bgMean[2] - vTol),
+    ))
+    highTarget.create(hsv.rows, hsv.cols, cv.CV_8UC3)
+    highTarget.setTo(new cv.Scalar(
+      Math.min(180, bgMean[0] + hTol),
+      Math.min(255, bgMean[1] + sTol),
+      Math.min(255, bgMean[2] + vTol),
+    ))
+    cv.inRange(hsv, lowTarget, highTarget, mask)
+    cv.bitwise_not(mask, mask)   // pieces = white, background = black
 
-    const allPixels = blobs.flat()
-    const raw = snapBlobToGrid(allPixels, cellSize)
-    console.log(`[pieces] slot ${slot}  raw shape`, raw)
+    // 4. Remove noise
+    const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5))
+    cv.morphologyEx(mask, cleaned, cv.MORPH_OPEN, kernel)
+    kernel.delete()
 
-    if (!raw) return null
+    // 5. Find contours and collect their bounding boxes (tray-local coords)
+    cv.findContours(cleaned, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-    const matched = matchPieceShape(raw)
-    console.log(`[pieces] slot ${slot}  matched`, matched ? `(${matched.length} cells)` : 'null')
-    return matched
-  })
+    const MIN_AREA = 400
+    const bounds: { x: number; y: number; width: number; height: number; area: number }[] = []
+    for (let i = 0; i < contours.size(); i++) {
+      const cnt  = contours.get(i)
+      const area = cv.contourArea(cnt)
+      const b    = cv.boundingRect(cnt)
+      cnt.delete()
+      if (area >= MIN_AREA) bounds.push({ x: b.x, y: b.y, width: b.width, height: b.height, area })
+    }
+
+    console.log(`[pieces] cellSize=${cellSize.toFixed(1)}  cs=${cs.toFixed(1)}  trayY0=${trayY0}  contours=${bounds.length}`)
+
+    // 6. For each of the 3 slots, take the largest contour whose centre falls in that slot
+    return [0, 1, 2].map(slot => {
+      const slotX0 = Math.round(slot       * imgW / 3)
+      const slotX1 = Math.round((slot + 1) * imgW / 3)
+
+      const inSlot = bounds.filter(b => {
+        const cx = b.x + b.width / 2
+        return cx >= slotX0 && cx < slotX1
+      })
+      if (!inSlot.length) return null
+
+      const best = inSlot.reduce((a, b) => a.area > b.area ? a : b)
+
+      // 7. Sampling grid — divide bounding box into cs×cs cells, score each with scoreCellBrightness
+      const cols  = Math.max(1, Math.round(best.width  / cs))
+      const rows  = Math.max(1, Math.round(best.height / cs))
+      // Convert tray-local coords → image coords (tray ROI had x offset = 0, y offset = trayY0)
+      const imgX  = best.x
+      const imgY  = trayY0 + best.y
+
+      const scores: number[] = []
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          scores.push(scoreCellBrightness(data, imgW, imgH,
+            imgX + c * cs, imgY + r * cs, cs, cs))
+
+      // 8. Otsu threshold → boolean shape → match to piece library
+      const thr   = otsu(scores)
+      const shape: Point[] = []
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          if (scores[r * cols + c] > thr) shape.push({ x: c, y: r })
+
+      if (!shape.length) return null
+      const matched = matchPieceShape(normalizePiece(shape))
+      console.log(`[pieces] slot ${slot}  grid=${cols}×${rows}  shape=${shape.length}cells  matched=${matched ? matched.length + 'cells' : 'null'}`)
+      return matched
+    })
+
+  } finally {
+    // Only delete Mats we created — src is owned by the caller
+    trayROI.delete(); rgb.delete(); hsv.delete()
+    mask.delete(); cleaned.delete()
+    lowTarget.delete(); highTarget.delete()
+    contours.delete(); hierarchy.delete()
+  }
 }
 
 // ─── Board-only entry point ───────────────────────────────────────────────────
@@ -634,7 +717,7 @@ export function detectGameState(cv: any, src: any, imageData: ImageData): Detect
   const board = classifyBoardCells(calibration.scores, calibration.threshold)
 
   // 5. Detect the 3 tray pieces
-  const pieces = detectTrayPieces(data, imgW, imgH, boardRect, calibration)
+  const pieces = detectTrayPieces(cv, src, data, imgW, imgH, boardRect)
 
   return { board, pieces, boardRect, cellSize: boardRect.width / 8 }
 }

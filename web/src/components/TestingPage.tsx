@@ -172,7 +172,7 @@ export function TestingPage() {
       const offX   = Math.round((PREVIEW_W - imageData.width)  / 2)
       const offY   = Math.round((PREVIEW_H - imageData.height) / 2)
 
-      runDetectPieces(cv, src, imageData, canvas, offX, offY, debugCanvasRef.current ?? undefined)
+      runDetectPieces(cv, src, imageData, canvas, offX, offY, debugCanvasRef.current ?? undefined, boardResult?.cellSize)
       setStatus('Piece detection ran — check canvas overlay')
     } catch (err) {
       setStatus(`Error: ${String(err)}`)
