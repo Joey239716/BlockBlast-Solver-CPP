@@ -97,9 +97,11 @@ export default function App() {
                 <SettingsPage />
               </div>
             </TabPanel>
-            <TabPanel active={tab === 'testing'}>
-              <TestingPage />
-            </TabPanel>
+            {import.meta.env.DEV && (
+              <TabPanel active={tab === 'testing'}>
+                <TestingPage />
+              </TabPanel>
+            )}
             <TabPanel active={tab === 'setup'}>
               <div className="pt-8 flex flex-col gap-6">
                 {/* WASM error banner */}

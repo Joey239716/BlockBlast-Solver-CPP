@@ -13,7 +13,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'setup',    label: 'Setup'    },
   { id: 'solution', label: 'Solution' },
   { id: 'settings', label: 'Settings' },
-  { id: 'testing',  label: 'Testing'  },
+  ...(import.meta.env.DEV ? [{ id: 'testing' as Tab, label: 'Testing' }] : []),
 ]
 
 export function Navbar({ activeTab, onTabChange, onHome }: NavbarProps) {
