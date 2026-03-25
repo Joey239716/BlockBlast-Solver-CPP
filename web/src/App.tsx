@@ -23,6 +23,7 @@ import { SolutionViewer } from '@/components/SolutionViewer'
 import { LoadingOverlay } from '@/components/LoadingOverlay'
 import { UploadModal } from '@/components/UploadModal'
 import { SettingsPage } from '@/components/SettingsPage'
+import { TestingPage } from '@/components/TestingPage'
 import { useGrid } from '@/hooks/useGrid'
 import { useSolver } from '@/hooks/useSolver'
 import { useBoardDetection } from '@/hooks/useBoardDetection'
@@ -56,7 +57,7 @@ export default function App() {
   const solver = useSolver()
   const [cvStatus, setCvStatus] = useState('')
   const { ready: cvReady, progress: cvProgress, processing: cvProcessing, detect } =
-    useBoardDetection(grid.loadBoard, setCvStatus)
+    useBoardDetection(grid.loadGameState, setCvStatus)
 
   useEffect(() => { void solver.init() }, [solver.init])
 
@@ -95,6 +96,9 @@ export default function App() {
               <div className="pt-8">
                 <SettingsPage />
               </div>
+            </TabPanel>
+            <TabPanel active={tab === 'testing'}>
+              <TestingPage />
             </TabPanel>
             <TabPanel active={tab === 'setup'}>
               <div className="pt-8 flex flex-col gap-6">

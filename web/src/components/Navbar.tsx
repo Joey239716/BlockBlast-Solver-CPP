@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useSettings } from '@/context/SettingsContext'
 
-export type Tab = 'setup' | 'solution' | 'settings'
+export type Tab = 'setup' | 'solution' | 'settings' | 'testing'
 
 interface NavbarProps {
   activeTab:   Tab
@@ -13,6 +13,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'setup',    label: 'Setup'    },
   { id: 'solution', label: 'Solution' },
   { id: 'settings', label: 'Settings' },
+  { id: 'testing',  label: 'Testing'  },
 ]
 
 export function Navbar({ activeTab, onTabChange, onHome }: NavbarProps) {

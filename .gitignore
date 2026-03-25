@@ -2,3 +2,8 @@ project/build/
 node_modules/
 web/dist/
 ml
+*.jpg
+*.jpeg
+*.JPG
+*.JPEG
+*.png

@@ -10,17 +10,18 @@ interface GridSnapshot {
 }
 
 interface UseGridReturn {
-  board:          boolean[][]
-  pieces:         (Point[] | null)[]
-  activePieceIdx: number | null
-  canUndo:        boolean
-  toggleCell:     (row: number, col: number) => void
-  setCell:        (row: number, col: number, value: boolean) => void
-  loadBoard:      (newBoard: boolean[][]) => void
-  setPiece:       (idx: number, points: Point[] | null) => void
-  setActivePiece: (idx: number | null) => void
-  undo:           () => void
-  resetAll:       () => void
+  board:           boolean[][]
+  pieces:          (Point[] | null)[]
+  activePieceIdx:  number | null
+  canUndo:         boolean
+  toggleCell:      (row: number, col: number) => void
+  setCell:         (row: number, col: number, value: boolean) => void
+  loadBoard:       (newBoard: boolean[][]) => void
+  loadGameState:   (newBoard: boolean[][], newPieces: (Point[] | null)[]) => void
+  setPiece:        (idx: number, points: Point[] | null) => void
+  setActivePiece:  (idx: number | null) => void
+  undo:            () => void
+  resetAll:        () => void
 }
 
 const MAX_HISTORY = 50
@@ -62,6 +63,10 @@ export function useGrid(): UseGridReturn {
     push({ board: newBoard.map(r => [...r]), pieces })
   }, [pieces, push])
 
+  const loadGameState = useCallback((newBoard: boolean[][], newPieces: (Point[] | null)[]) => {
+    push({ board: newBoard.map(r => [...r]), pieces: [...newPieces] })
+  }, [push])
+
 const setPiece = useCallback((idx: number, points: Point[] | null) => {
     const next = [...pieces]
     next[idx]  = points
@@ -98,7 +103,7 @@ const setPiece = useCallback((idx: number, points: Point[] | null) => {
   return {
     board, pieces, activePieceIdx,
     canUndo: cursor > 0,
-    toggleCell, setCell, loadBoard, setPiece, setActivePiece,
+    toggleCell, setCell, loadBoard, loadGameState, setPiece, setActivePiece,
     undo, resetAll,
   }
 }
