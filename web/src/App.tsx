@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Analytics } from '@vercel/analytics/react'
 
 function TabPanel({ active, children }: { active: boolean; children: React.ReactNode }) {
   return (
@@ -213,6 +214,7 @@ export default function App() {
             </TabPanel>
         </main>
       </motion.div>
+      <Analytics />
     </div>
   )
 }
