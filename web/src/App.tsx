@@ -56,7 +56,7 @@ export default function App() {
   const solver = useSolver()
   const [cvStatus, setCvStatus] = useState('')
   const { ready: cvReady, progress: cvProgress, processing: cvProcessing, detect } =
-    useBoardDetection(grid.loadBoard, setCvStatus)
+    useBoardDetection(grid.loadGameState, setCvStatus)
 
   useEffect(() => { void solver.init() }, [solver.init])
 
