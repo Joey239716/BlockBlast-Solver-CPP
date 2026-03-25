@@ -12,7 +12,7 @@
  * NMS:      nms:False in model args — we run greedy NMS here
  */
 
-import * as ort from 'onnxruntime-web/wasm'
+import * as ort from 'onnxruntime-web'
 
 // In production the wasm binary is served from public/ at the root.
 // In dev, ort-web is served directly from node_modules (optimizeDeps.exclude)
