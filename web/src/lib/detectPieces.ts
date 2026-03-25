@@ -6,21 +6,24 @@
  * Fix: Adds a targeted "White Bypass" to prevent bright pieces from being erased.
  */
 
+import type { Point } from '@/types/solver'
+import { normalizePiece } from '@/lib/pieces'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function runDetectPieces(
   cv: any,
   src: any,
   imageData: ImageData,
-  canvas: HTMLCanvasElement,
+  canvas: HTMLCanvasElement | null,
   offX: number,
   offY: number,
   debugCanvas?: HTMLCanvasElement,
   cellSize?: number,
-): void {
-  const ctx = canvas.getContext('2d')!
+): (Point[] | null)[] {
+  const ctx = canvas?.getContext('2d') ?? null
 
   // ── Tunable parameters ──────────────────────────────────────────────────────
-  const TRAY_SCALE  = 0.43   
+  const TRAY_SCALE  = 0.43
   const SLICE_TOP   = 0.65
   const SLICE_BOT   = 0.85
   const MIN_AREA    = 400
@@ -46,6 +49,7 @@ export function runDetectPieces(
   const lowColor   = new cv.Mat(), highColor  = new cv.Mat()
   const lowWhite   = new cv.Mat(), highWhite  = new cv.Mat()
   const contours   = new cv.MatVector(), hierarchy = new cv.Mat()
+  const slots: (Point[] | null)[] = [null, null, null]
 
   try {
     src.roi(new cv.Rect(0, startY, src.cols, scanHeight)).copyTo(dockROI)
@@ -95,10 +99,12 @@ export function runDetectPieces(
     }
 
     const drawYStart = offY + Math.round(imageData.height * SLICE_TOP)
-    ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.fillRect(offX, drawYStart, cleaned.cols, cleaned.rows); ctx.restore()
-    const tmpCanvas = document.createElement('canvas'); tmpCanvas.width = rgbaMask.cols; tmpCanvas.height = rgbaMask.rows
-    tmpCanvas.getContext('2d')!.putImageData(maskImgData, 0, 0)
-    ctx.save(); ctx.globalAlpha = 0.6; ctx.drawImage(tmpCanvas, offX, drawYStart); ctx.restore()
+    if (ctx) {
+      ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.fillRect(offX, drawYStart, cleaned.cols, cleaned.rows); ctx.restore()
+      const tmpCanvas = document.createElement('canvas'); tmpCanvas.width = rgbaMask.cols; tmpCanvas.height = rgbaMask.rows
+      tmpCanvas.getContext('2d')!.putImageData(maskImgData, 0, 0)
+      ctx.save(); ctx.globalAlpha = 0.6; ctx.drawImage(tmpCanvas, offX, drawYStart); ctx.restore()
+    }
 
     // 6. Contours and Grid Logic
     cv.findContours(cleaned, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -111,13 +117,14 @@ export function runDetectPieces(
         const cols = Math.max(1, Math.round(b.width / cs))
         const rows = Math.max(1, Math.round(b.height / cs))
 
-        ctx.strokeStyle = 'rgba(255, 220, 0, 0.9)'; ctx.lineWidth = 2; ctx.strokeRect(canvasX, canvasY, b.width, b.height)
+        if (ctx) { ctx.strokeStyle = 'rgba(255, 220, 0, 0.9)'; ctx.lineWidth = 2; ctx.strokeRect(canvasX, canvasY, b.width, b.height) }
 
+        const shape: Point[] = []
         for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
             const maskX = Math.min(cleaned.cols - 1, Math.max(0, Math.round(b.x + (c + 0.5) * cs)))
             const maskY = Math.min(cleaned.rows - 1, Math.max(0, Math.round(b.y + (r + 0.5) * cs)))
-            
+
             let whiteCount = 0
             for (let dy = -1; dy <= 1; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
@@ -127,23 +134,37 @@ export function runDetectPieces(
               }
             }
             const filled = whiteCount > 4
+            if (filled) shape.push({ x: c, y: r })
 
-            const dotX = canvasX + (c + 0.5) * cs, dotY = canvasY + (r + 0.5) * cs
-            ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2)
-            if (filled) { ctx.fillStyle = 'rgba(0, 255, 0, 1)'; ctx.fill() } 
-            else { ctx.strokeStyle = 'rgba(255, 50, 50, 0.9)'; ctx.lineWidth = 1.5; ctx.stroke() }
+            if (ctx) {
+              const dotX = canvasX + (c + 0.5) * cs, dotY = canvasY + (r + 0.5) * cs
+              ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2)
+              if (filled) { ctx.fillStyle = 'rgba(0, 255, 0, 1)'; ctx.fill() }
+              else { ctx.strokeStyle = 'rgba(255, 50, 50, 0.9)'; ctx.lineWidth = 1.5; ctx.stroke() }
+            }
           }
         }
-        ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#fff'
-        ctx.fillText(`${b.width}x${b.height}px ${cols}x${rows}U`, canvasX, canvasY - 5)
+        if (ctx) { ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#fff'; ctx.fillText(`${b.width}x${b.height}px ${cols}x${rows}U`, canvasX, canvasY - 5) }
+
+        // Compact: remove phantom empty rows/cols caused by kernel bleed on the bounding box
+        const filledYs = [...new Set(shape.map(p => p.y))].sort((a, b) => a - b)
+        const filledXs = [...new Set(shape.map(p => p.x))].sort((a, b) => a - b)
+        const yMap = new Map(filledYs.map((y, i) => [y, i]))
+        const xMap = new Map(filledXs.map((x, i) => [x, i]))
+        const compact = shape.map(p => ({ x: xMap.get(p.x)!, y: yMap.get(p.y)! }))
+
+        // Assign to slot by x-centre of bounding box
+        const slot = Math.min(2, Math.floor((b.x + b.width / 2) / (cleaned.cols / 3)))
+        if (compact.length > 0) slots[slot] = normalizePiece(compact)
       }
       cnt.delete()
     }
-  } catch (err) { console.error('[detectPieces] error:', err) } 
+  } catch (err) { console.error('[detectPieces] error:', err) }
   finally {
     dockROI.delete(); rgb.delete(); hsv.delete(); mask.delete(); cleaned.delete()
     rgbaMask.delete(); lowBG.delete(); highBG.delete(); isNotBG.delete(); isColorful.delete()
     isBrightWhite.delete(); lowColor.delete(); highColor.delete(); lowWhite.delete(); highWhite.delete()
     contours.delete(); hierarchy.delete()
   }
+  return slots
 }

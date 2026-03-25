@@ -38,6 +38,13 @@ export async function loadYoloSession(): Promise<ort.InferenceSession> {
   })
 }
 
+/** Module-level singleton — loads once, shared across all callers. */
+let _sessionPromise: Promise<ort.InferenceSession> | null = null
+export function getYoloSession(): Promise<ort.InferenceSession> {
+  if (!_sessionPromise) _sessionPromise = loadYoloSession()
+  return _sessionPromise
+}
+
 // ─── Letterbox preprocessing ──────────────────────────────────────────────────
 
 const MODEL_SIZE = 640
@@ -109,6 +116,49 @@ function nms(boxes: YoloBox[], iouThresh = 0.45): YoloBox[] {
 }
 
 // ─── Main inference function ──────────────────────────────────────────────────
+
+/**
+ * Run YOLOv11 inference, returning the best board bounding box (class 0).
+ *
+ * @param session    ort.InferenceSession from loadYoloSession()
+ * @param imageData  Full screenshot ImageData (any size)
+ * @param confThresh Minimum score for class 0 to keep a detection (default 0.25)
+ */
+export async function runYoloBoard(
+  session:    ort.InferenceSession,
+  imageData:  ImageData,
+  confThresh  = 0.25,
+): Promise<YoloBox | null> {
+  const { tensor, scale, padX, padY } = letterbox(imageData)
+
+  const inputTensor = new ort.Tensor('float32', tensor, [1, 3, MODEL_SIZE, MODEL_SIZE])
+  const results     = await session.run({ [session.inputNames[0]]: inputTensor })
+  const out         = results[session.outputNames[0]].data as Float32Array
+
+  const NUM_DETS = 8400
+  const boxes: YoloBox[] = []
+
+  for (let i = 0; i < NUM_DETS; i++) {
+    const s0 = out[4 * NUM_DETS + i]   // class 0 score (board)
+    if (s0 < confThresh) continue
+
+    const cx = out[0 * NUM_DETS + i]
+    const cy = out[1 * NUM_DETS + i]
+    const w  = out[2 * NUM_DETS + i]
+    const h  = out[3 * NUM_DETS + i]
+
+    boxes.push({
+      x:      (cx - w / 2 - padX) / scale,
+      y:      (cy - h / 2 - padY) / scale,
+      width:  w / scale,
+      height: h / scale,
+      score:  s0,
+    })
+  }
+
+  const after = nms(boxes)
+  return after.length > 0 ? after[0] : null
+}
 
 /**
  * Run YOLOv11 inference, returning tray-piece bounding boxes (class 1 only)

@@ -78,7 +78,7 @@ function otsu(values: number[]): number {
 // ─── 1. Board finding via OpenCV ──────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function findBoardRect(cv: any, src: any, imgW: number, imgH: number): Rect | null {
+export function findBoardRect(cv: any, src: any, imgW: number, imgH: number): Rect | null {
   const gray     = new cv.Mat(), blurred = new cv.Mat()
   const edges    = new cv.Mat(), dilated = new cv.Mat()
   const contours = new cv.MatVector(), hier = new cv.Mat()
@@ -99,8 +99,9 @@ function findBoardRect(cv: any, src: any, imgW: number, imgH: number): Rect | nu
       const r      = cv.boundingRect(contours.get(i))
       const area   = r.width * r.height
       const aspect = r.width / r.height
-      if (area   < imgW * imgH * 0.10)    continue
-      if (aspect < 0.7 || aspect > 1.4)   continue
+      if (area   < imgW * imgH * 0.10)       continue
+      if (aspect < 0.7  || aspect > 1.4)    continue
+      if (r.y    < imgH * 0.10)             continue   // board never starts at the very top
       if (r.y + r.height / 2 > imgH * 0.65) continue
       const score = area * (1 - Math.abs(1 - aspect))
       if (score > bestScore) { bestScore = score; best = { x: r.x, y: r.y, width: r.width, height: r.height } }
@@ -205,7 +206,7 @@ export function scoreCellBrightness(
   data: Uint8Array, imgW: number, imgH: number,
   cx: number, cy: number, cw: number, ch: number,
 ): number {
-  const MARGIN = 0.10, S = 4
+  const MARGIN = 0.20, S = 4
   const samples: number[] = []
   for (let dy = 0; dy < S; dy++) {
     for (let dx = 0; dx < S; dx++) {
@@ -217,9 +218,11 @@ export function scoreCellBrightness(
       samples.push(bright(r, g, b))
     }
   }
-  const mean  = samples.reduce((a, b) => a + b, 0) / samples.length
-  const range = Math.max(...samples) - Math.min(...samples)
-  return mean + range
+  // Sort and take the top half of samples as the score — robust to single
+  // border/grid-line pixels that inflate range-based formulas
+  samples.sort((a, b) => a - b)
+  const top = samples.slice(Math.floor(samples.length / 2))
+  return top.reduce((a, b) => a + b, 0) / top.length
 }
 
 interface BoardCalibration {
@@ -475,6 +478,24 @@ export function snapBlobToGrid(
 // Falls back to the closest piece by symmetric difference, accepting up to
 // 2 mismatched cells (covers single-cell JPEG artefacts / glow bleed).
 
+export function matchPieceName(detected: Point[]): string | null {
+  if (!detected.length) return null
+  const norm   = normalizePiece(detected)
+  const detKey = norm.map(p => `${p.x},${p.y}`).sort().join('|')
+
+  let bestName: string | null = null, bestDiff = Infinity
+  for (const [name, points] of Object.entries(PIECES)) {
+    const pKey = normalizePiece(points).map(p => `${p.x},${p.y}`).sort().join('|')
+    if (pKey === detKey) return name
+    const pSet = new Set(pKey.split('|'))
+    const dSet = new Set(detKey.split('|'))
+    const diff = [...pSet].filter(k => !dSet.has(k)).length +
+                 [...dSet].filter(k => !pSet.has(k)).length
+    if (diff < bestDiff) { bestDiff = diff; bestName = name }
+  }
+  return bestDiff <= 2 ? bestName : null
+}
+
 export function matchPieceShape(detected: Point[]): Point[] | null {
   if (!detected.length) return null
 
@@ -542,26 +563,41 @@ export function computeTrayThreshold(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function detectTrayPieces(
   cv: any, src: any,
-  data: Uint8Array, imgW: number, imgH: number,
+  imgW: number, imgH: number,
   boardRect: Rect,
 ): (Point[] | null)[] {
   const cellSize   = boardRect.width / 8
-  const TRAY_SCALE = 0.95                      // tray assets are slightly smaller than board cells
+  const TRAY_SCALE = 0.43                      // tray piece cells are ~43% the size of board cells
   const cs         = cellSize * TRAY_SCALE
   const trayY0     = boardRect.y + boardRect.height
   const trayH      = imgH - trayY0
   if (trayH <= 0) return [null, null, null]
 
+  // Same sensitivity constants as detectPieces.ts
+  const SENSITIVITY = 0.7
+  const S_MIN = Math.round(60 - SENSITIVITY * 40)
+  const V_MIN = Math.round(60 - SENSITIVITY * 40)
+  const H_TOL = Math.round(25 - SENSITIVITY * 15)
+  const S_TOL = Math.round(50 - SENSITIVITY * 30)
+  const V_TOL = Math.round(50 - SENSITIVITY * 30)
+
   // Allocate all Mats up front — never delete src (caller owns it)
-  const trayROI   = new cv.Mat()
-  const rgb       = new cv.Mat()
-  const hsv       = new cv.Mat()
-  const mask      = new cv.Mat()
-  const cleaned   = new cv.Mat()
-  const lowTarget = new cv.Mat()
-  const highTarget = new cv.Mat()
-  const contours  = new cv.MatVector()
-  const hierarchy = new cv.Mat()
+  const trayROI      = new cv.Mat()
+  const rgb          = new cv.Mat()
+  const hsv          = new cv.Mat()
+  const mask         = new cv.Mat()
+  const cleaned      = new cv.Mat()
+  const lowBG        = new cv.Mat()
+  const highBG       = new cv.Mat()
+  const isNotBG      = new cv.Mat()
+  const isColorful   = new cv.Mat()
+  const isBrightWhite = new cv.Mat()
+  const lowColor     = new cv.Mat()
+  const highColor    = new cv.Mat()
+  const lowWhite     = new cv.Mat()
+  const highWhite    = new cv.Mat()
+  const contours     = new cv.MatVector()
+  const hierarchy    = new cv.Mat()
 
   try {
     // 1. Crop to the full tray region
@@ -571,27 +607,34 @@ function detectTrayPieces(
     cv.cvtColor(trayROI, rgb, cv.COLOR_RGBA2RGB)
     cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV)
 
-    // 3. Dynamic background targeting — mean of the tray ≈ background colour
+    // 3. Background subtraction
     const bgMean = cv.mean(hsv)
-    const hTol = 15, sTol = 30, vTol = 40
-    lowTarget.create(hsv.rows, hsv.cols, cv.CV_8UC3)
-    lowTarget.setTo(new cv.Scalar(
-      Math.max(0,   bgMean[0] - hTol),
-      Math.max(0,   bgMean[1] - sTol),
-      Math.max(0,   bgMean[2] - vTol),
-    ))
-    highTarget.create(hsv.rows, hsv.cols, cv.CV_8UC3)
-    highTarget.setTo(new cv.Scalar(
-      Math.min(180, bgMean[0] + hTol),
-      Math.min(255, bgMean[1] + sTol),
-      Math.min(255, bgMean[2] + vTol),
-    ))
-    cv.inRange(hsv, lowTarget, highTarget, mask)
-    cv.bitwise_not(mask, mask)   // pieces = white, background = black
+    lowBG.create(hsv.rows, hsv.cols, hsv.type())
+    lowBG.setTo(new cv.Scalar(Math.max(0, bgMean[0]-H_TOL), Math.max(0, bgMean[1]-S_TOL), Math.max(0, bgMean[2]-V_TOL), 0))
+    highBG.create(hsv.rows, hsv.cols, hsv.type())
+    highBG.setTo(new cv.Scalar(Math.min(180, bgMean[0]+H_TOL), Math.min(255, bgMean[1]+S_TOL), Math.min(255, bgMean[2]+V_TOL), 0))
+    cv.inRange(hsv, lowBG, highBG, isNotBG)
+    cv.bitwise_not(isNotBG, isNotBG)
 
-    // 4. Remove noise
-    const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5))
-    cv.morphologyEx(mask, cleaned, cv.MORPH_OPEN, kernel)
+    // 4. Colorful filter (pieces have saturation and brightness)
+    lowColor.create(hsv.rows, hsv.cols, hsv.type())
+    lowColor.setTo(new cv.Scalar(0, S_MIN, V_MIN, 0))
+    highColor.create(hsv.rows, hsv.cols, hsv.type())
+    highColor.setTo(new cv.Scalar(180, 255, 255, 0))
+    cv.inRange(hsv, lowColor, highColor, isColorful)
+    cv.bitwise_and(isNotBG, isColorful, mask)
+
+    // 5. White piece bypass — bright low-saturation pieces pass through regardless
+    lowWhite.create(hsv.rows, hsv.cols, hsv.type())
+    lowWhite.setTo(new cv.Scalar(0, 0, 200, 0))
+    highWhite.create(hsv.rows, hsv.cols, hsv.type())
+    highWhite.setTo(new cv.Scalar(180, 60, 255, 0))
+    cv.inRange(hsv, lowWhite, highWhite, isBrightWhite)
+    cv.bitwise_or(mask, isBrightWhite, mask)
+
+    // 6. Morphological closing — fills gaps inside pieces
+    const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(11, 11))
+    cv.morphologyEx(mask, cleaned, cv.MORPH_CLOSE, kernel)
     kernel.delete()
 
     // 5. Find contours and collect their bounding boxes (tray-local coords)
@@ -622,25 +665,26 @@ function detectTrayPieces(
 
       const best = inSlot.reduce((a, b) => a.area > b.area ? a : b)
 
-      // 7. Sampling grid — divide bounding box into cs×cs cells, score each with scoreCellBrightness
-      const cols  = Math.max(1, Math.round(best.width  / cs))
-      const rows  = Math.max(1, Math.round(best.height / cs))
-      // Convert tray-local coords → image coords (tray ROI had x offset = 0, y offset = trayY0)
-      const imgX  = best.x
-      const imgY  = trayY0 + best.y
+      // 7. Sampling grid — read center pixel of each cell from the binary mask
+      const cols = Math.max(1, Math.round(best.width  / cs))
+      const rows = Math.max(1, Math.round(best.height / cs))
 
-      const scores: number[] = []
-      for (let r = 0; r < rows; r++)
-        for (let c = 0; c < cols; c++)
-          scores.push(scoreCellBrightness(data, imgW, imgH,
-            imgX + c * cs, imgY + r * cs, cs, cs))
-
-      // 8. Otsu threshold → boolean shape → match to piece library
-      const thr   = otsu(scores)
       const shape: Point[] = []
-      for (let r = 0; r < rows; r++)
-        for (let c = 0; c < cols; c++)
-          if (scores[r * cols + c] > thr) shape.push({ x: c, y: r })
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const maskX = Math.min(cleaned.cols - 1, Math.max(0, Math.round(best.x + (c + 0.5) * cs)))
+          const maskY = Math.min(cleaned.rows - 1, Math.max(0, Math.round(best.y + (r + 0.5) * cs)))
+          let whiteCount = 0
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const py = Math.min(cleaned.rows - 1, Math.max(0, maskY + dy))
+              const px = Math.min(cleaned.cols - 1, Math.max(0, maskX + dx))
+              if (cleaned.data[py * cleaned.cols + px] > 127) whiteCount++
+            }
+          }
+          if (whiteCount > 4) shape.push({ x: c, y: r })
+        }
+      }
 
       if (!shape.length) return null
       const matched = matchPieceShape(normalizePiece(shape))
@@ -652,7 +696,9 @@ function detectTrayPieces(
     // Only delete Mats we created — src is owned by the caller
     trayROI.delete(); rgb.delete(); hsv.delete()
     mask.delete(); cleaned.delete()
-    lowTarget.delete(); highTarget.delete()
+    lowBG.delete(); highBG.delete(); isNotBG.delete(); isColorful.delete()
+    isBrightWhite.delete(); lowColor.delete(); highColor.delete()
+    lowWhite.delete(); highWhite.delete()
     contours.delete(); hierarchy.delete()
   }
 }
@@ -674,11 +720,11 @@ export interface BoardOnlyState {
  * separately (e.g. via YOLO).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function detectBoardOnly(cv: any, src: any, imageData: ImageData): BoardOnlyState | null {
+export function detectBoardOnly(cv: any, src: any, imageData: ImageData, boardHint?: Rect): BoardOnlyState | null {
   const { width: imgW, height: imgH } = imageData
   const data = new Uint8Array(imageData.data.buffer)
 
-  const approxRect = findBoardRect(cv, src, imgW, imgH)
+  const approxRect = boardHint ?? findBoardRect(cv, src, imgW, imgH)
   if (!approxRect) return null
 
   const boardRect   = refineBoardRect(data, imgW, imgH, approxRect)
@@ -717,7 +763,7 @@ export function detectGameState(cv: any, src: any, imageData: ImageData): Detect
   const board = classifyBoardCells(calibration.scores, calibration.threshold)
 
   // 5. Detect the 3 tray pieces
-  const pieces = detectTrayPieces(cv, src, data, imgW, imgH, boardRect)
+  const pieces = detectTrayPieces(cv, src, imgW, imgH, boardRect)
 
   return { board, pieces, boardRect, cellSize: boardRect.width / 8 }
 }
